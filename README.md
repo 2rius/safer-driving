@@ -5,13 +5,13 @@ Application for the bachelor project "Safer Driving"
 ## Authors
 
 Christian Bank Lauridsen  
-[@ChrBank]
+[@ChrBank]( https://github.com/ChrBank )
 
 Mads Greve Andersen  
-[@Mads0709]
+[@Mads0709]( https://github.com/Mads0709 )
 
 Max-Emil Smith Thorius  
-[@2rius]
+[@2rius]( https://github.com/2rius )
 
 ## License
 
