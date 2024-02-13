@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "131469707328",
+    "project_id": "safer-driving",
+    "storage_bucket": "safer-driving.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:131469707328:android:692ad598cef616d00f77a5",
+        "android_client_info": {
+          "package_name": "com.example.saferdriving"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDmQYJWxqbzH6n9oqq-SK8x47LaciUNDjM"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
