@@ -6,6 +6,7 @@ import com.example.saferdriving.R
 import com.example.saferdriving.databinding.ActivityMainBinding
 import com.example.saferdriving.enums.ObdTypes
 import com.github.eltonvs.obd.command.engine.SpeedCommand
+import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
@@ -14,6 +15,7 @@ import java.io.IOException
 class MainActivity : AppCompatActivity() {
     private lateinit var binding: ActivityMainBinding
 
+    @OptIn(DelicateCoroutinesApi::class)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
@@ -27,9 +29,9 @@ class MainActivity : AppCompatActivity() {
         GlobalScope.launch(Dispatchers.IO) {
             try {
                 val obdConnection =
-                    ObdTypes.BLUETOOTH.connect(this@MainActivity, "11:22:33:44:55:66")
+                    ObdTypes.BLUETOOTH.connect(this@MainActivity, "00:1D:A5:05:74:E0")
 
-                val response = obdConnection.run(SpeedCommand()).value
+                val response = obdConnection.run(SpeedCommand()).formattedValue
                 launch(Dispatchers.Main) {
                     binding.outputText.text = getString(R.string.speed_result, response)
                 }

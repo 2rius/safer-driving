@@ -4,6 +4,9 @@ import android.Manifest
 import android.bluetooth.BluetoothManager
 import android.content.Context
 import android.content.pm.PackageManager
+import android.os.Build
+import androidx.annotation.RequiresApi
+import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import com.github.eltonvs.obd.connection.ObdDeviceConnection
 import kotlinx.coroutines.Dispatchers
@@ -14,7 +17,7 @@ import java.util.*
 
 enum class ObdTypes {
     WIFI {
-        override suspend fun connect(context: Context, ip: String, port: Int): ObdDeviceConnection {
+        override suspend fun connect(context: AppCompatActivity, ip: String, port: Int): ObdDeviceConnection {
             return withContext(Dispatchers.IO) {
                 val socket = Socket(ip, port)
                 val inputStream = socket.getInputStream()
@@ -29,11 +32,18 @@ enum class ObdTypes {
         }
     },
     BLUETOOTH {
-        override suspend fun connect(context: Context, ip: String, port: Int): ObdDeviceConnection {
+        @RequiresApi(Build.VERSION_CODES.S)
+        override suspend fun connect(context: AppCompatActivity, ip: String, port: Int): ObdDeviceConnection {
             return withContext(Dispatchers.IO) {
+                val request_code = 10
+
                 val bluetoothManager =
                     context.getSystemService(Context.BLUETOOTH_SERVICE) as BluetoothManager
                 val bluetoothDevice = bluetoothManager.adapter.getRemoteDevice(ip)
+
+                if (context.checkSelfPermission(Manifest.permission.BLUETOOTH_CONNECT) != PackageManager.PERMISSION_GRANTED)
+                    context.requestPermissions(arrayOf(Manifest.permission.BLUETOOTH_CONNECT), request_code)
+
                 val socket = if (ContextCompat.checkSelfPermission(
                         context, Manifest.permission.BLUETOOTH_CONNECT
                     ) != PackageManager.PERMISSION_GRANTED
@@ -59,6 +69,6 @@ enum class ObdTypes {
     };
 
     abstract suspend fun connect(
-        context: Context, ip: String = "192.168.0.10", port: Int = 3500
+        context: AppCompatActivity, ip: String = "192.168.0.10", port: Int = 3500
     ): ObdDeviceConnection
 }
