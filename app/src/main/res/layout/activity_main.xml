@@ -5,6 +5,7 @@
     android:layout_height="match_parent"
     tools:context=".activities.MainActivity">
 
+
     <RelativeLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
@@ -15,6 +16,16 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="@string/speed" />
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="100dp" />
+        <!-- Start button-->
+        <Button
+            android:id="@+id/register_new_ride"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/register_new_ride"
+            android:layout_centerInParent="true"/>
 
     </RelativeLayout>
 
