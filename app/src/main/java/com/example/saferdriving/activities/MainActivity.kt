@@ -4,8 +4,8 @@ import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
 import com.example.saferdriving.R
 import com.example.saferdriving.databinding.ActivityMainBinding
-import com.example.saferdriving.enums.ObdTypes
 import com.example.saferdriving.obd.SpeedCommand
+import com.example.saferdriving.obd.WifiObdConnection
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
@@ -30,13 +30,14 @@ class MainActivity : AppCompatActivity() {
                 //     ObdTypes.BLUETOOTH.connect(this@MainActivity, "00:1D:A5:05:74:E0")
 
                 val obdConnection =
-                        ObdTypes.WIFI.connect(this@MainActivity, "192.168.0.112", 35000)
+                        WifiObdConnection("192.168.0.112", 35000)
+
+                val obdDeviceConnection = obdConnection.connect(this@MainActivity)
 
                 var tries = 1
 
                 while (true) {
-                    //Thread.sleep(1000)
-                    val response = obdConnection.run(SpeedCommand(), useCache = false, delayTime = 500)
+                    val response = obdDeviceConnection.run(SpeedCommand(), useCache = false, delayTime = 500)
                     launch(Dispatchers.Main) {
                         binding.outputText.text = getString(R.string.speed_result, "try: " + tries++ + ", response: " + response.formattedValue)
                     }
