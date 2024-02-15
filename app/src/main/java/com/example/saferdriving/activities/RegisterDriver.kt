@@ -3,7 +3,6 @@ package com.example.saferdriving.activities
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.widget.Toast
-import com.example.saferdriving.R
 import com.example.saferdriving.dataClasses.Driver
 import com.google.firebase.database.DatabaseReference
 import com.google.firebase.database.ktx.database
@@ -16,21 +15,21 @@ class RegisterDriver : AppCompatActivity() {
     private lateinit var database: DatabaseReference
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_register_driver)
+        binding = ActivityRegisterDriverBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
         database =
-            Firebase.database("https://safer-driving-default-rtdb.europe-west1.firebasedatabase.app/").reference
+            Firebase.database("https://safer-driving-default-rtdb.europe-west1.firebasedatabase.app/").reference.child("drivers")
 
         binding.registerNewRide.setOnClickListener{
-            // Retrieve data from EditText fields
-            val age = binding.editTextAge.text.toString().toInt()
-            val drivingExperience = binding.editTextDrivingExperience.text.toString().toInt()
+            val age = binding.editTextAge.text.toString().toIntOrNull()
+            val drivingExperience = binding.editTextDrivingExperience.text.toString().toIntOrNull()
             val residence = binding.editTextResidence.text.toString()
             val job = binding.editTextJob.text.toString()
 
-            // Create a Driver object
-            val driver = Driver(
+
+            // Create a new Driver object
+            val newDriver = Driver(
                 age = age,
                 drivingExperience = drivingExperience,
                 residence = residence,
@@ -38,8 +37,8 @@ class RegisterDriver : AppCompatActivity() {
                 // Add other properties as needed
             )
 
-            // Push the Driver object to Firebase under "drivers" node
-            database.child("drivers").push().setValue(driver)
+            // Push the new driver data to the database
+            database.push().setValue(newDriver)
                 .addOnSuccessListener {
                     Toast.makeText(this, "Driver added successfully!", Toast.LENGTH_SHORT).show()
                 }
