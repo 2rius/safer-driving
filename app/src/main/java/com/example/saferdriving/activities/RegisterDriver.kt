@@ -17,6 +17,7 @@ class RegisterDriver : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_register_driver)
+        setContentView(binding.root)
 
         database =
             Firebase.database("https://safer-driving-default-rtdb.europe-west1.firebasedatabase.app/").reference
