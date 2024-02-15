@@ -17,7 +17,7 @@ class WifiObdConnection(private val ip: String = "192.168.0.112", private val po
             if (inputStream != null && outputStream != null) {
                 ObdDeviceConnection(inputStream, outputStream)
             } else {
-                throw IOException("Input or output stream is null")
+                throw IOException()
             }
         }
     }
