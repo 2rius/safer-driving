@@ -26,11 +26,9 @@ class MainActivity : AppCompatActivity() {
 
         GlobalScope.launch(Dispatchers.IO) {
             try {
-                // val obdConnection =
-                //     ObdTypes.BLUETOOTH.connect(this@MainActivity, "00:1D:A5:05:74:E0")
+                // val obdConnection = BluetoothObdConnection()
 
-                val obdConnection =
-                        WifiObdConnection("192.168.0.112", 35000)
+                val obdConnection = WifiObdConnection()
 
                 val obdDeviceConnection = obdConnection.connect(this@MainActivity)
 
