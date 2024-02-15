@@ -1,20 +1,32 @@
 package com.example.saferdriving.utilities
 
+import android.Manifest
 import android.content.Context
 import android.content.pm.PackageManager
+import android.os.Build
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 
-fun AppCompatActivity.requestPermission(
+val BLUETOOTH_PERMISSIONS = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+    arrayOf(
+        Manifest.permission.BLUETOOTH_CONNECT
+    )
+} else {
+    arrayOf(
+        Manifest.permission.BLUETOOTH,
+        Manifest.permission.BLUETOOTH_ADMIN
+    )
+}
+
+fun AppCompatActivity.getRequestPermission(
     permissions: Array<String>,
-    onGranted: () -> Unit,
-    onDenied: () -> Unit
-) {
+    onGranted: () -> Unit = {},
+    onDenied: () -> Unit = {}
+): () -> Unit {
     val requestPermissions = permissionsToRequest(this, permissions)
     if (requestPermissions.isEmpty()) {
-        onGranted()
-        return
+        return onGranted
     }
 
     // Code example from https://developer.android.com/training/permissions/requesting
@@ -28,7 +40,7 @@ fun AppCompatActivity.requestPermission(
             }
         }
 
-    requestPermissionLauncher.launch(requestPermissions.toTypedArray())
+    return { requestPermissionLauncher.launch(requestPermissions.toTypedArray()) }
 }
 
 private fun permissionsToRequest(ctx: Context, permissions: Array<String>): ArrayList<String> {

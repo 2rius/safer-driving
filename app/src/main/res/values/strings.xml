@@ -1,5 +1,7 @@
 <resources>
     <string name="app_name">Safer Driving</string>
+    <string name="wifi">WIFI</string>
+    <string name="bluetooth">Bluetooth</string>
     <string name="speed">Speed loading…</string>
     <string name="speed_result">Speed: %s</string>
     <string name="error">Error: %s</string>

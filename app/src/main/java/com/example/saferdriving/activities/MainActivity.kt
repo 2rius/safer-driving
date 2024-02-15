@@ -4,13 +4,10 @@ import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
 import com.example.saferdriving.R
 import com.example.saferdriving.databinding.ActivityMainBinding
-import com.example.saferdriving.obd.SpeedCommand
-import com.example.saferdriving.obd.WifiObdConnection
+import com.example.saferdriving.utilities.BLUETOOTH_PERMISSIONS
+import com.example.saferdriving.utilities.getRequestPermission
 import kotlinx.coroutines.DelicateCoroutinesApi
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.launch
-import java.io.IOException
+import showConnectionTypeDialog
 
 class MainActivity : AppCompatActivity() {
     private lateinit var binding: ActivityMainBinding
@@ -24,7 +21,11 @@ class MainActivity : AppCompatActivity() {
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        GlobalScope.launch(Dispatchers.IO) {
+        val requestPermission: (() -> Unit, () -> Unit) -> () -> Unit = { onGranted, onDenied -> getRequestPermission(BLUETOOTH_PERMISSIONS, onGranted, onDenied) }
+
+        showConnectionTypeDialog(this, requestPermission)
+
+        /*GlobalScope.launch(Dispatchers.IO) {
             try {
                 // val obdConnection = BluetoothObdConnection()
 
@@ -46,6 +47,6 @@ class MainActivity : AppCompatActivity() {
                     binding.outputText.text = getString(R.string.speed_result, e.message)
                 }
             }
-        }
+        }*/
     }
 }
