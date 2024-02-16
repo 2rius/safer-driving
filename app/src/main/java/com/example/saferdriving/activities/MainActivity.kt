@@ -11,7 +11,7 @@ import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
-import showConnectionTypeDialog
+import com.example.saferdriving.utilities.showConnectionTypeDialog
 
 class MainActivity : AppCompatActivity() {
     private lateinit var binding: ActivityMainBinding
@@ -25,17 +25,17 @@ class MainActivity : AppCompatActivity() {
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        val requestPermission: (() -> Unit, () -> Unit) -> () -> Unit = { onGranted, onDenied -> getRequestPermission(BLUETOOTH_PERMISSIONS, onGranted, onDenied) }
+        val requestPermission: (() -> Unit) -> () -> Unit = { onDenied -> getRequestPermission(BLUETOOTH_PERMISSIONS, onDenied = onDenied) }
 
         val futureConnection = showConnectionTypeDialog(this, requestPermission)
 
         futureConnection.thenAccept { connection ->
             GlobalScope.launch(Dispatchers.IO) {
                 try {
-                    val obdDeviceConnection = connection.connect(this@MainActivity)
+                    connection.connect(this@MainActivity)
 
                     while (true) {
-                        val response = obdDeviceConnection.run(SpeedCommand(), useCache = false, delayTime = 500)
+                        val response = connection.run(SpeedCommand())
                         launch(Dispatchers.Main) {
                             binding.outputText.text = getString(R.string.speed_result, response.formattedValue)
                         }

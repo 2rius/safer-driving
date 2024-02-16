@@ -1,3 +1,5 @@
+package com.example.saferdriving.utilities
+
 import android.app.AlertDialog
 import android.content.Context
 import android.view.LayoutInflater
@@ -13,7 +15,7 @@ import java.util.concurrent.CompletableFuture
 
 fun showConnectionTypeDialog(
     context: Context,
-    getRequestBluetooth: (onGranted: () -> Unit, onDenied: () -> Unit) -> () -> Unit
+    getRequestBluetooth: (onDenied: () -> Unit) -> () -> Unit
 ): CompletableFuture<ObdConnection> {
     val future = CompletableFuture<ObdConnection>()
 
@@ -26,7 +28,7 @@ fun showConnectionTypeDialog(
 
 private fun createConnectionTypeDialog(
     context: Context,
-    getRequestBluetooth: (onGranted: () -> Unit, onDenied: () -> Unit) -> () -> Unit,
+    getRequestBluetooth: (onDenied: () -> Unit) -> () -> Unit,
     future: CompletableFuture<ObdConnection>
 ): AlertDialog {
     val builder = AlertDialog.Builder(context)
@@ -45,8 +47,7 @@ private fun createConnectionTypeDialog(
     }
 
     // Set up request Bluetooth permissions
-    val request = getRequestBluetooth({
-    }) {
+    val request = getRequestBluetooth {
         wifiRadioButton.isChecked = true
         bluetoothRadioButton.isChecked = false
         bluetoothRadioButton.isClickable = false

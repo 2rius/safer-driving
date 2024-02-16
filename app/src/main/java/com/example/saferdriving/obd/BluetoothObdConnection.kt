@@ -11,14 +11,14 @@ import kotlinx.coroutines.withContext
 import java.io.IOException
 import java.util.UUID
 
-class BluetoothObdConnection(private val ip: String = "00:1D:A5:05:74:E0") : ObdConnection {
-    override suspend fun connect(context: Context): ObdDeviceConnection {
+class BluetoothObdConnection(private val ip: String = "00:1D:A5:05:74:E0") : ObdConnection() {
+    override suspend fun connect(context: Context) {
         return withContext(Dispatchers.IO) {
             val bluetoothManager =
                 context.getSystemService(Context.BLUETOOTH_SERVICE) as BluetoothManager
             val bluetoothDevice = bluetoothManager.adapter.getRemoteDevice(ip)
 
-            val socket = if (ContextCompat.checkSelfPermission(
+            val bluetoothSocket = if (ContextCompat.checkSelfPermission(
                     context, Manifest.permission.BLUETOOTH_CONNECT
                 ) != PackageManager.PERMISSION_GRANTED
             ) {
@@ -27,16 +27,17 @@ class BluetoothObdConnection(private val ip: String = "00:1D:A5:05:74:E0") : Obd
                 bluetoothDevice.createRfcommSocketToServiceRecord(UUID.fromString("00001101-0000-1000-8000-00805F9B34FB"))
             }
 
-            socket.connect()
-            val inputStream = socket.inputStream
-            val outputStream = socket.outputStream
+            bluetoothSocket.connect()
+            val inputStream = bluetoothSocket.inputStream
+            val outputStream = bluetoothSocket.outputStream
 
             if (inputStream != null && outputStream != null) {
-                ObdDeviceConnection(inputStream, outputStream)
+                socket = bluetoothSocket
+                obdDeviceConnection = ObdDeviceConnection(inputStream, outputStream)
             } else {
+                bluetoothSocket.close()
                 throw IOException("Input or output stream is null")
             }
         }
     }
-
 }
