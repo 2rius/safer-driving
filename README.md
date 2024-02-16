@@ -16,3 +16,7 @@ Max-Emil Smith Thorius
 ## License
 
 This project is licensed under the MIT License - see the LICENSE file for details
+
+## Acknowledgments
+
+* [eltonvs/kotlin-obd-api](https://github.com/eltonvs/kotlin-obd-api)
