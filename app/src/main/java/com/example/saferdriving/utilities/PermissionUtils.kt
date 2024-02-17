@@ -8,6 +8,12 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 
+/**
+ * Array of Bluetooth permissions required by the application. This will vary depending on the
+ * Android SDK version. In SDK version 23 and above, only [Manifest.permission.BLUETOOTH_CONNECT]
+ * permission is needed. On older versions, [Manifest.permission.BLUETOOTH] and
+ * [Manifest.permission.BLUETOOTH_ADMIN] permissions are required
+ */
 val BLUETOOTH_PERMISSIONS = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
     arrayOf(
         Manifest.permission.BLUETOOTH_CONNECT
@@ -19,6 +25,17 @@ val BLUETOOTH_PERMISSIONS = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) 
     )
 }
 
+/**
+ * Returns a function that requests the specified permissions and executes the provided
+ * callbacks based on the permission grant status.
+ *
+ * @param permissions The array of permissions requested.
+ * @param onGranted A callback function that executes if all the permissions are granted.
+ * Defaults to empty lambda.
+ * @param onDenied A callback function that executes if any of the permissions are denied.
+ * Defaults to empty lambda.
+ * @return A function that launches the permission request.
+ */
 fun AppCompatActivity.getRequestPermission(
     permissions: Array<String>,
     onGranted: () -> Unit = {},
@@ -43,15 +60,23 @@ fun AppCompatActivity.getRequestPermission(
     return { requestPermissionLauncher.launch(requestPermissions.toTypedArray()) }
 }
 
+/**
+ * Returns a list of permissions that need to be requested from the user.
+ * Only permissions that are not already granted will be returned.
+ *
+ * @param context The context in which the permissions are checked.
+ * @param permissions The array of permissions that should be checked.
+ * @return A list of permissions that need to be requested.
+ */
 private fun permissionsToRequest(
-    ctx: Context,
+    context: Context,
     permissions: Array<String>
 ): ArrayList<String> {
     val result: ArrayList<String> = ArrayList()
 
     for (permission in permissions)
         if (ContextCompat.checkSelfPermission(
-                ctx,
+                context,
                 permission
             ) != PackageManager.PERMISSION_GRANTED
         )

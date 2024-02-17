@@ -4,6 +4,11 @@ import com.github.eltonvs.obd.command.ObdCommand
 import com.github.eltonvs.obd.command.ObdRawResponse
 import com.github.eltonvs.obd.command.bytesToInt
 
+/**
+ * Represents a fixed OBD command for retrieving vehicle speed. The same functionality as
+ * [com.github.eltonvs.obd.command.engine.SpeedCommand], but removes 2 indexes from
+ * the buffered value to function correctly for our specific OBD devices.
+ */
 class SpeedCommand : ObdCommand() {
     override val tag = "SPEED"
     override val name = "Vehicle Speed"

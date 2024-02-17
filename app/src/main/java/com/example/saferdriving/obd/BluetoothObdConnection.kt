@@ -11,7 +11,22 @@ import kotlinx.coroutines.withContext
 import java.io.IOException
 import java.util.UUID
 
+/**
+ * OBD-II connection that is established over Bluetooth. It provides functionality for
+ * establishing a connection to an OBD-II device, retrieve data from it, and close the
+ * connection when no longer needed.
+ */
 class BluetoothObdConnection(private val ip: String = "00:1D:A5:05:74:E0") : ObdConnection() {
+    /**
+     * Establishes a Bluetooth connection with the OBD-II device.
+     * It is executed asynchronously in IO dispatcher to avoid blocking the main thread.
+     * It creates a socket to the specified bluetooth address of the OBD-II device and initializes
+     * input and output streams for a connection
+     *
+     * @param context The context of the application or activity.
+     * @throws SecurityException If bluetooth permission is not granted.
+     * @throws IOException If the input or output stream is null.
+     */
     override suspend fun connect(
         context: Context
     ) {

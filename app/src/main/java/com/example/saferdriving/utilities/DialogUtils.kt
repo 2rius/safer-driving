@@ -13,6 +13,15 @@ import com.example.saferdriving.obd.ObdConnection
 import com.example.saferdriving.obd.WifiObdConnection
 import java.util.concurrent.CompletableFuture
 
+/**
+ * Displays a dialog for selecting the type of connection (WIFI or Bluetooth) to the OBD device.
+ *
+ * @param context The context in which the dialog should be displayed.
+ * @param getRequestBluetooth A function that requests permissions. Takes a callback function to
+ * execute if permission is denied.
+ * @return A CompletableFuture that will be completed with the selected ObdConnection (either
+ * [WifiObdConnection] or [BluetoothObdConnection].
+ */
 fun showConnectionTypeDialog(
     context: Context,
     getRequestBluetooth: (onDenied: () -> Unit) -> () -> Unit
@@ -26,6 +35,15 @@ fun showConnectionTypeDialog(
     return future
 }
 
+/**
+ * Creates the dialog for requesting the type of connection.
+ *
+ * @param context The context in which the dialog should be displayed.
+ * @param getRequestBluetooth A function that requests permissions. Takes a callback function to
+ * execute if permission is denied.
+ * @param future The CompletableFuture to complete.
+ * @return The created AlertDialog.
+ */
 private fun createConnectionTypeDialog(
     context: Context,
     getRequestBluetooth: (onDenied: () -> Unit) -> () -> Unit,
@@ -63,6 +81,12 @@ private fun createConnectionTypeDialog(
     return builder.create()
 }
 
+/**
+ * Processes the user input from the connection type dialog and completes the future.
+ *
+ * @param dialogView The view containing UI elements of the connection type dialog.
+ * @param future The CompletableFuture to complete.
+ */
 private fun processUserInput(
     dialogView: View,
     future: CompletableFuture<ObdConnection>
