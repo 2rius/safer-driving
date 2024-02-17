@@ -12,7 +12,9 @@ import java.io.IOException
 import java.util.UUID
 
 class BluetoothObdConnection(private val ip: String = "00:1D:A5:05:74:E0") : ObdConnection() {
-    override suspend fun connect(context: Context) {
+    override suspend fun connect(
+        context: Context
+    ) {
         return withContext(Dispatchers.IO) {
             val bluetoothManager =
                 context.getSystemService(Context.BLUETOOTH_SERVICE) as BluetoothManager

@@ -43,7 +43,10 @@ fun AppCompatActivity.getRequestPermission(
     return { requestPermissionLauncher.launch(requestPermissions.toTypedArray()) }
 }
 
-private fun permissionsToRequest(ctx: Context, permissions: Array<String>): ArrayList<String> {
+private fun permissionsToRequest(
+    ctx: Context,
+    permissions: Array<String>
+): ArrayList<String> {
     val result: ArrayList<String> = ArrayList()
 
     for (permission in permissions)
