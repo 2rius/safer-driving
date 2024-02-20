@@ -14,4 +14,7 @@
     <string name="refresh">Refresh Geolocation</string>
     <string name="longitude">Longitude</string>
     <string name="latitude">Latitude</string>
+    <string name="startSound">Start</string>
+    <string name="pauseSound">Pause</string>
+    <string name="go_to_liveData">LiveData</string>
 </resources>

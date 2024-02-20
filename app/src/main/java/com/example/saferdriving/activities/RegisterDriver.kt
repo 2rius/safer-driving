@@ -1,5 +1,6 @@
 package com.example.saferdriving.activities
 
+import android.content.Intent
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.widget.Toast
@@ -47,5 +48,18 @@ class RegisterDriver : AppCompatActivity() {
                 }
         }
 
+        binding.goToLiveDataDisplay.setOnClickListener{
+            startLiveDataDisplayActivity()
+        }
+
+    }
+
+    private fun startLiveDataDisplayActivity() {
+        val intent = Intent(
+            this,
+            LiveDataDisplay::class.java
+        )
+        startActivity(intent)
+        finish()
     }
 }

@@ -39,6 +39,8 @@
             android:name=".activities.RegisterDriver"
             android:exported="false" />
         <activity
+            android:name=".activities.LiveDataDisplay" />
+        <activity
             android:name=".activities.MainActivity"
             android:exported="true">
             <intent-filter>
