@@ -3,4 +3,8 @@
     <string name="speed">Speed loading…</string>
     <string name="speed_result">Speed: %s</string>
     <string name="error">Error: %s</string>
+    <string name="title_activity_live_data_display">LiveDataDisplay</string>
+    <string name="register_new_ride">Register new ride</string>
+
+
 </resources>
