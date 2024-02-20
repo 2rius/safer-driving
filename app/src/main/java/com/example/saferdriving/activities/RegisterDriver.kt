@@ -1,12 +1,12 @@
 package com.example.saferdriving.activities
 
-import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.widget.Toast
+import androidx.appcompat.app.AppCompatActivity
 import com.example.saferdriving.dataClasses.Driver
+import com.example.saferdriving.databinding.ActivityRegisterDriverBinding
 import com.google.firebase.database.DatabaseReference
 import com.google.firebase.database.ktx.database
-import com.example.saferdriving.databinding.ActivityRegisterDriverBinding
 import com.google.firebase.ktx.Firebase
 
 class RegisterDriver : AppCompatActivity() {
@@ -27,13 +27,19 @@ class RegisterDriver : AppCompatActivity() {
             val residence = binding.editTextResidence.text.toString()
             val job = binding.editTextJob.text.toString()
 
+            // Retrieve air temperature and air pressure from environment sensors
+            val pressure = intent.getIntExtra("pressure", 0)
+            //val temperature = intent.getIntExtra("temperature", 0)
+
 
             // Create a new Driver object
             val newDriver = Driver(
                 age = age,
                 drivingExperience = drivingExperience,
                 residence = residence,
-                job = job
+                job = job,
+                airPressure = pressure,
+                //airTemperature = temperature
                 // Add other properties as needed
             )
 

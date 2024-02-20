@@ -11,4 +11,5 @@
     <string name="positive_button">OK</string>
     <string name="title_activity_live_data_display">LiveDataDisplay</string>
     <string name="register_new_ride">Register new ride</string>
+
 </resources>
