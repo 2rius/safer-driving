@@ -25,6 +25,11 @@ val BLUETOOTH_PERMISSIONS = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) 
     )
 }
 
+val LOCATION_PERMISSIONS = arrayOf (
+            Manifest.permission.ACCESS_FINE_LOCATION,
+            Manifest.permission.ACCESS_COARSE_LOCATION
+        )
+
 /**
  * Returns a function that requests the specified permissions and executes the provided
  * callbacks based on the permission grant status.
