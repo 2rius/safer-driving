@@ -16,9 +16,6 @@ import com.example.saferdriving.utilities.LOCATION_PERMISSIONS
 import com.example.saferdriving.utilities.getRequestPermission
 
 class MainActivity : AppCompatActivity() {
-
-    private var longitude: Double = 0.0
-    private var latitude: Double = 0.0
     private lateinit var binding: ActivityMainBinding
     // A reference to the service used to get location updates.
     private var mService: Geolocation? = null
