@@ -2,12 +2,20 @@ plugins {
     id 'com.android.application'
     id 'org.jetbrains.kotlin.android'
     id("com.google.gms.google-services")
+    id 'com.google.android.libraries.mapsplatform.secrets-gradle-plugin'
+}
 
+def getPropertyValue(String propertyName, String defaultValue) {
+    def propsFile = file("../local.properties")
+    def Properties props = new Properties()
+    props.load(new FileInputStream(propsFile))
+    return props.getProperty(propertyName, defaultValue)
 }
 
 android {
     namespace 'com.example.saferdriving'
     compileSdk 33
+
 
     defaultConfig {
         applicationId "com.example.saferdriving"
@@ -20,11 +28,17 @@ android {
     }
 
     buildTypes {
+        debug {
+            resValue("string", "weather_api_key", "\"${getPropertyValue("WEATHER_API_KEY", "YOUR_DEFAULT_API_KEY")}\"")
+        }
         release {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+            resValue("string", "weather_api_key", "\"${getPropertyValue("WEATHER_API_KEY", "YOUR_DEFAULT_API_KEY")}\"")
         }
     }
+
+
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_1_8
         targetCompatibility JavaVersion.VERSION_1_8
@@ -34,8 +48,10 @@ android {
     }
     buildFeatures {
         viewBinding true
+        buildConfig true
     }
 }
+
 
 dependencies {
     implementation 'androidx.core:core-ktx:1.7.0'
@@ -50,4 +66,6 @@ dependencies {
     implementation 'com.google.firebase:firebase-database-ktx'
     implementation 'com.firebaseui:firebase-ui-database:7.1.1'
     implementation 'com.google.android.gms:play-services-location:21.0.1'
+    implementation 'com.android.volley:volley:1.2.1'
 }
+

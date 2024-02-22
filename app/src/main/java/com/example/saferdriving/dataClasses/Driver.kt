@@ -22,6 +22,7 @@ data class Driver(
     var vehicleAcceleration: Int? = null,
     var totalAmountOfMinutesSpeeding: Int? = null,
     var airPressure: Int? = null,
+    var airTemperature: Int? = null,
     var windSpeed: Int? = null,
-    var weatherCondition: String? = null
+    var weatherDescription: String? = null
 )
