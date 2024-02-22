@@ -8,9 +8,9 @@ import android.widget.EditText
 import android.widget.RadioButton
 import android.widget.RadioGroup
 import com.example.saferdriving.R
-import com.example.saferdriving.obd.BluetoothObdConnection
-import com.example.saferdriving.obd.ObdConnection
-import com.example.saferdriving.obd.WifiObdConnection
+import com.example.saferdriving.classes.BluetoothObdConnection
+import com.example.saferdriving.classes.ObdConnection
+import com.example.saferdriving.classes.WifiObdConnection
 import java.util.concurrent.CompletableFuture
 
 /**

@@ -11,6 +11,7 @@ import android.util.Log
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import com.android.volley.Request
+import com.android.volley.RequestQueue
 import com.android.volley.toolbox.StringRequest
 import com.android.volley.toolbox.Volley
 import com.example.saferdriving.BuildConfig
@@ -19,11 +20,14 @@ import com.example.saferdriving.services.Geolocation
 import com.example.saferdriving.services.Geolocation.Companion.TAG
 import com.example.saferdriving.utilities.LOCATION_PERMISSIONS
 import com.example.saferdriving.utilities.getRequestPermission
+import com.example.saferdriving.utilities.getRoad
 import org.json.JSONObject
 
 
 class MainActivity : AppCompatActivity(){
     private lateinit var binding: ActivityMainBinding
+
+    private lateinit var queue: RequestQueue
 
     // weather url to get JSON
     var weather_url1 = ""
@@ -36,6 +40,9 @@ class MainActivity : AppCompatActivity(){
     private var temperatureInCelsius : Int? = null   //celsius
     private var windspeedInMS : Int? = null //m/s
     private var weatherDiscription : String = ""
+
+    // OSM url for API
+    var osm_url = ""
 
 
 
@@ -50,6 +57,7 @@ class MainActivity : AppCompatActivity(){
         super.onCreate(savedInstanceState)
         //setContentView(R.layout.activity_main)
         binding = ActivityMainBinding.inflate(layoutInflater)
+        queue = Volley.newRequestQueue(this)
         setContentView(binding.root)
 
         // Check which permissions is needed to ask to the user.
@@ -61,11 +69,22 @@ class MainActivity : AppCompatActivity(){
         binding.refreshButton.setOnClickListener{
             startListeningGeo()
             getPermission()
-            Log.i(TAG, "hello")
+            try {
+                getRoad(queue, latitude, longitude) { road ->
+                    Log.i(TAG, "IT IS IN DA TRY")
+                    Toast.makeText(
+                        this,
+                        "roadname: " + road.name + ", roadtype: " + road.type + ", speedlimit: " + road.speedLimit,
+                        Toast.LENGTH_SHORT
+                    ).show()
+                }
+            } catch (e: Exception) {
+                Log.i(TAG, "IT CAUGHT DA EXCEPTIONA")
+            }
         }
         binding.weatherInfoButton.setOnClickListener {
-            if(latitude != 0.0 || longitude != 0.0)
-                getWeatherInfo()
+            if (latitude != 0.0 || longitude != 0.0)
+                getWeatherInfo(queue)
         }
 
 
@@ -132,9 +151,7 @@ class MainActivity : AppCompatActivity(){
         )
     }
 
-    fun getWeatherInfo() {
-        // Instantiate the RequestQueue.
-        val queue = Volley.newRequestQueue(this)
+    fun getWeatherInfo(queue: RequestQueue) {
         val url: String = weather_url1
         Log.e("lat", url)
 
@@ -171,7 +188,7 @@ class MainActivity : AppCompatActivity(){
 
             },
             // In case of any error
-            { Toast.makeText(this, "Error getting temperature!", Toast.LENGTH_SHORT).show()})
+            { Toast.makeText(this, "Error getting temperature!", Toast.LENGTH_SHORT).show() })
         queue.add(stringReq)
     }
 

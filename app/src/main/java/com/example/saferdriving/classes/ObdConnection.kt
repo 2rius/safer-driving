@@ -1,4 +1,4 @@
-package com.example.saferdriving.obd
+package com.example.saferdriving.classes
 
 import android.content.Context
 import com.example.saferdriving.dataClasses.Acceleration
