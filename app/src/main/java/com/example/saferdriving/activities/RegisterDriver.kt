@@ -29,7 +29,9 @@ class RegisterDriver : AppCompatActivity() {
 
             // Retrieve air temperature and air pressure from environment sensors
             val pressure = intent.getIntExtra("pressure", 0)
-            //val temperature = intent.getIntExtra("temperature", 0)
+            val temperature = intent.getIntExtra("temperature", 0)
+            val windSpeed = intent.getIntExtra("windSpeed", 0)
+            val weatherDescription = intent.getStringExtra("weatherDescription")
 
 
             // Create a new Driver object
@@ -39,7 +41,9 @@ class RegisterDriver : AppCompatActivity() {
                 residence = residence,
                 job = job,
                 airPressure = pressure,
-                //airTemperature = temperature
+                airTemperature = temperature,
+                windSpeed = windSpeed,
+                weatherDescription = weatherDescription
                 // Add other properties as needed
             )
 

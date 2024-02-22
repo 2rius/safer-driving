@@ -24,5 +24,5 @@ data class Driver(
     var airPressure: Int? = null,
     var airTemperature: Int? = null,
     var windSpeed: Int? = null,
-    var weatherCondition: String? = null
+    var weatherDescription: String? = null
 )
