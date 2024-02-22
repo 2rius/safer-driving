@@ -11,6 +11,7 @@ import com.example.saferdriving.R
 import com.example.saferdriving.databinding.ActivityLiveDataDisplayBinding
 import java.io.IOException
 
+
 class LiveDataDisplay : AppCompatActivity() {
 
     //private lateinit var appBarConfiguration: AppBarConfiguration
@@ -21,33 +22,27 @@ class LiveDataDisplay : AppCompatActivity() {
     var mediaPlayer: MediaPlayer? = null
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-
         binding = ActivityLiveDataDisplayBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        binding.startSound.setOnClickListener{
+        mediaPlayer = MediaPlayer.create(this, R.raw.sound)
+
+
+        binding.startSound.setOnClickListener {
             playAudio()
         }
-        binding.pauseSound.setOnClickListener{
+        binding.pauseSound.setOnClickListener {
             pauseAudio()
         }
     }
 
     private fun playAudio() {
-        var audioUrl = "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3"
-        mediaPlayer = MediaPlayer()
-        mediaPlayer!!.setAudioStreamType(AudioManager.STREAM_MUSIC)
-
-
-        try {
-            mediaPlayer!!.setDataSource(audioUrl)
-            mediaPlayer!!.prepare()
-            mediaPlayer!!.start()
-        } catch (e: IOException){
-            e.printStackTrace()
+        if (!mediaPlayer?.isPlaying!!) {
+            mediaPlayer?.start()
+            Toast.makeText(this, "Sound started", Toast.LENGTH_SHORT).show()
+        } else {
+            Toast.makeText(this, "Audio is already playing", Toast.LENGTH_SHORT).show()
         }
-
-        Toast.makeText(this, "Sound started", Toast.LENGTH_SHORT).show()
     }
     private fun pauseAudio() {
         if(mediaPlayer!!.isPlaying){
