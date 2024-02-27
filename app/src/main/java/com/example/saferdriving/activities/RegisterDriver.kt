@@ -14,6 +14,7 @@ class RegisterDriver : AppCompatActivity() {
 
     private lateinit var binding: ActivityRegisterDriverBinding
     private lateinit var database: DatabaseReference
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityRegisterDriverBinding.inflate(layoutInflater)
@@ -48,7 +49,7 @@ class RegisterDriver : AppCompatActivity() {
                 }
         }
 
-        binding.goToLiveDataDisplay.setOnClickListener{
+        binding.goToRecord.setOnClickListener{
             startLiveDataDisplayActivity()
         }
 

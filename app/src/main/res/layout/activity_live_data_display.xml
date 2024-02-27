@@ -5,6 +5,37 @@
     android:layout_height="match_parent"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     tools:context=".activities.MainActivity">
+    <TextView
+        android:id="@+id/timeTV"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="00:00:00"
+        android:padding="10dp"
+        android:textColor="@color/black"
+        android:textSize="60sp"
+        android:textAlignment="center"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toTopOf="@+id/startStopButton"
+        tools:ignore="MissingConstraints" />
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/startStopButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Start Timer"
+        app:layout_constraintTop_toBottomOf="@id/timeTV"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toStartOf="@id/resetButton"
+        app:layout_constraintBottom_toTopOf="@id/latitudeText" />
+
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/resetButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="reset"
+        app:layout_constraintTop_toBottomOf="@id/timeTV"
+        app:layout_constraintStart_toEndOf="@id/startStopButton"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintBottom_toTopOf="@id/latitudeText" />
 
 
     <Button
@@ -14,19 +45,54 @@
         android:text="@string/startSound"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/latitudeText"
         app:layout_constraintBottom_toTopOf="@id/pause_sound"
-        app:layout_constraintVertical_bias="0.1"/>
+        app:layout_constraintVertical_bias="0.2"/>
+
+
+    <TextView
+        android:id="@+id/latitudeText"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/latitude"
+        app:layout_constraintTop_toBottomOf="@id/start_sound"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:textSize="20sp"
+        android:layout_marginTop="8dp"/>
+
+    <TextView
+        android:id="@+id/longitudeText"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/longitude"
+        app:layout_constraintTop_toBottomOf="@id/latitudeText"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:layout_marginTop="8dp"
+        android:textSize="20sp"/>
+
+    <Button
+        android:id="@+id/refreshButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/refresh"
+        app:layout_constraintTop_toBottomOf="@id/longitudeText"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintBottom_toTopOf="@id/pause_sound"
+        app:layout_constraintVertical_bias="0.5"/>
 
     <Button
         android:id="@+id/pause_sound"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="@string/pauseSound"
+        android:text="@string/endRide"
+        app:layout_constraintTop_toBottomOf="@id/refreshButton"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/start_sound"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintVertical_bias="0.1"/>
+
 
 </androidx.constraintlayout.widget.ConstraintLayout>
