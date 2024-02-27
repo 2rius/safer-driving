@@ -18,4 +18,5 @@
     <string name="startSound">Start Sound</string>
     <string name="endRide">End ride</string>
     <string name="go_to_record">Record</string>
+    <string name="weather_info">Get Weather Info</string>
 </resources>

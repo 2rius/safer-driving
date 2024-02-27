@@ -1,8 +1,12 @@
 package com.example.saferdriving.activities
 
 import android.content.*
-import android.media.AudioManager
+
 import android.media.MediaPlayer
+import com.android.volley.Request
+import com.android.volley.RequestQueue
+import com.android.volley.toolbox.StringRequest
+import com.android.volley.toolbox.Volley
 import android.os.Bundle
 import android.os.IBinder
 import android.util.Log
@@ -14,11 +18,13 @@ import com.example.saferdriving.R
 import android.text.format.Time
 import com.example.saferdriving.databinding.ActivityLiveDataDisplayBinding
 import androidx.core.content.PermissionChecker
+import com.example.saferdriving.BuildConfig
 import com.example.saferdriving.services.TimerService
 import com.example.saferdriving.services.Geolocation
 import com.example.saferdriving.services.Geolocation.Companion.TAG
 import com.example.saferdriving.utilities.LOCATION_PERMISSIONS
 import com.example.saferdriving.utilities.getRequestPermission
+import org.json.JSONObject
 import kotlin.math.roundToInt
 
 class LiveDataDisplay : AppCompatActivity() {
@@ -32,6 +38,22 @@ class LiveDataDisplay : AppCompatActivity() {
     private lateinit var btnPlay: Button
     private lateinit var btnPause: Button
 
+    private lateinit var queue: RequestQueue
+    // weather url to get JSON
+    var weather_url1 = ""
+
+    // api id for url
+    var api_id1 = BuildConfig.WEATHER_API_KEY
+
+    //Environment sensor data
+    private var pressureInMilliBars : Int? = null  //mbar
+    private var temperatureInCelsius : Int? = null   //celsius
+    private var windspeedInMS : Int? = null //m/s
+    private var weatherDiscription : String = ""
+
+    // OSM url for API
+    var osm_url = ""
+
     //timer variables
     private var timerStarted = false
     private lateinit var serviceIntent: Intent
@@ -41,7 +63,7 @@ class LiveDataDisplay : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         val getPermission = getRequestPermission(LOCATION_PERMISSIONS, onGranted = {subscribeToService()})
-
+        queue = Volley.newRequestQueue(this)
         binding = ActivityLiveDataDisplayBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
@@ -206,6 +228,47 @@ class LiveDataDisplay : AppCompatActivity() {
             unbindService(mServiceConnection)
             mBound = false
         }
+    }
+
+    fun getWeatherInfo(queue: RequestQueue) {
+        val url: String = weather_url1
+        Log.e("lat", url)
+
+        // Request a string response
+        // from the provided URL.
+        val stringReq = StringRequest(Request.Method.GET, url,
+            { response ->
+                Log.e("lat", response.toString())
+
+                // get the JSON object
+                val obj = JSONObject(response)
+
+                // get the Array from obj of name - "data"
+                val arr = obj.getJSONArray("data")
+                Log.e("lat obj1", arr.toString())
+
+                // get the JSON object from the
+                // array at index position 0
+                val obj2 = arr.getJSONObject(0)
+                Log.e("lat obj2", obj2.toString())
+
+                // set the temperature and the city
+                // name using getString() function
+                val temperature = obj2.getString("temp")
+                val pressure = obj2.getString("pres")
+                val windSpeed = obj2.getString("wind_spd")
+                val weatherDescriptionFromJSON = obj2.getJSONObject("weather").getString("description")
+
+                // Update the temperatureInCelsius variable
+                temperatureInCelsius = temperature.toFloatOrNull()?.toInt()
+                pressureInMilliBars = pressure.toFloatOrNull()?.toInt()
+                windspeedInMS = windSpeed.toFloatOrNull()?.toInt()
+                weatherDiscription = weatherDescriptionFromJSON
+
+            },
+            // In case of any error
+            { Toast.makeText(this, "Error getting temperature!", Toast.LENGTH_SHORT).show() })
+        queue.add(stringReq)
     }
 
 
