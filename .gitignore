@@ -96,6 +96,7 @@ obj/
 
 # User-specific configurations
 .idea/caches/
+app/.idea/
 .idea/libraries/
 .idea/shelf/
 .idea/workspace.xml

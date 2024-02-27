@@ -1,5 +1,6 @@
 package com.example.saferdriving.activities
 
+import android.content.Intent
 import android.os.Bundle
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
@@ -13,6 +14,7 @@ class RegisterDriver : AppCompatActivity() {
 
     private lateinit var binding: ActivityRegisterDriverBinding
     private lateinit var database: DatabaseReference
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityRegisterDriverBinding.inflate(layoutInflater)
@@ -66,5 +68,18 @@ class RegisterDriver : AppCompatActivity() {
                 }
         }
 
+        binding.goToRecord.setOnClickListener{
+            startLiveDataDisplayActivity()
+        }
+
+    }
+
+    private fun startLiveDataDisplayActivity() {
+        val intent = Intent(
+            this,
+            LiveDataDisplay::class.java
+        )
+        startActivity(intent)
+        finish()
     }
 }
