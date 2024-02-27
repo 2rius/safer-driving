@@ -28,10 +28,6 @@ class TimerService : Service()
         super.onDestroy()
     }
 
-    private fun cancel() {
-        TODO("Not yet implemented")
-    }
-
     private inner class TimeTask(private var time: Double) : TimerTask()
     {
         override fun run()

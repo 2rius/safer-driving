@@ -61,10 +61,11 @@ class LiveDataDisplay : AppCompatActivity() {
             pauseAudio()
         }
 
-        binding.startStopButton.setOnClickListener { startStopTimer() }
         binding.resetButton.setOnClickListener { resetTimer() }
 
         serviceIntent = Intent(applicationContext, TimerService::class.java)
+        startStopTimer()
+        binding.startStopButton.setOnClickListener { startStopTimer() }
         registerReceiver(updateTime, IntentFilter(TimerService.TIMER_UPDATED))
     }
 
