@@ -1,9 +1,6 @@
 package com.example.saferdriving.dataClasses
 
-import java.util.concurrent.locks.Condition
-
-data class Driver(
-    var id: Int? = null,
+data class RideInfo(
     var age: Int? = null,
     var drivingExperience: Int? = null,
     var residence: String? = null,
@@ -19,10 +16,15 @@ data class Driver(
     var topSpeedCity: Int? = null,
     var averageAirTemperature: Int? = null,
     var averageFuelConsumption: Int? = null,
-    var vehicleAcceleration: Int? = null,
     var totalAmountOfMinutesSpeeding: Int? = null,
     var airPressure: Int? = null,
     var airTemperature: Int? = null,
     var windSpeed: Int? = null,
-    var weatherDescription: String? = null
+    var weatherDescription: String? = null,
+    var amountOfMinutesSpeedingInHighway: Int? = null,
+    var amountOfMinutesSpeedingInCountryRoad: Int? = null,
+    var amountOfMinutesSpeedingInCity: Int? = null,
+    var averageMinutesSpeedingInHighway: Int? = null,
+    var averageMinutesSpeedingInCountryRoad: Int? = null,
+    var averageMinutesSpeedingInCity: Int? = null,
 )

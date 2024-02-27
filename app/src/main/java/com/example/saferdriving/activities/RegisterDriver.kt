@@ -3,7 +3,7 @@ package com.example.saferdriving.activities
 import android.os.Bundle
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
-import com.example.saferdriving.dataClasses.Driver
+import com.example.saferdriving.dataClasses.RideInfo
 import com.example.saferdriving.databinding.ActivityRegisterDriverBinding
 import com.google.firebase.database.DatabaseReference
 import com.google.firebase.database.ktx.database
@@ -35,7 +35,7 @@ class RegisterDriver : AppCompatActivity() {
 
 
             // Create a new Driver object
-            val newDriver = Driver(
+            val newRideInfo = RideInfo(
                 age = age,
                 drivingExperience = drivingExperience,
                 residence = residence,
@@ -48,9 +48,18 @@ class RegisterDriver : AppCompatActivity() {
             )
 
             // Push the new driver data to the database
-            database.push().setValue(newDriver)
+            // Push the new driver data to the database and retrieve the auto-generated ID
+            val newDriverRef = database.push()
+            val driverId = newDriverRef.key // Get the auto-generated ID
+
+            // Set the value of the newly created driver using the retrieved ID
+            newDriverRef.setValue(newRideInfo)
                 .addOnSuccessListener {
                     Toast.makeText(this, "Driver added successfully!", Toast.LENGTH_SHORT).show()
+
+                    // Now you can use driverId to reference this specific driver if needed
+                    //val specificDriverRef = database.child(driverId!!)
+                    // Use specificDriverRef to perform operations on this specific driver
                 }
                 .addOnFailureListener {
                     Toast.makeText(this, "Failed to add driver: ${it.message}", Toast.LENGTH_SHORT).show()

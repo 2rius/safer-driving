@@ -15,12 +15,19 @@ import com.android.volley.RequestQueue
 import com.android.volley.toolbox.StringRequest
 import com.android.volley.toolbox.Volley
 import com.example.saferdriving.BuildConfig
+import com.example.saferdriving.classes.ObdConnection
 import com.example.saferdriving.databinding.ActivityMainBinding
-import com.example.saferdriving.services.Geolocation
-import com.example.saferdriving.services.Geolocation.Companion.TAG
+import com.example.saferdriving.services.LiveDataService
+import com.example.saferdriving.services.LiveDataService.Companion.TAG
+import com.example.saferdriving.utilities.BLUETOOTH_PERMISSIONS
 import com.example.saferdriving.utilities.LOCATION_PERMISSIONS
 import com.example.saferdriving.utilities.getRequestPermission
 import com.example.saferdriving.utilities.getRoad
+import com.example.saferdriving.utilities.showConnectionTypeDialog
+import kotlinx.coroutines.DelicateCoroutinesApi
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.launch
 import org.json.JSONObject
 
 
@@ -28,6 +35,8 @@ class MainActivity : AppCompatActivity(){
     private lateinit var binding: ActivityMainBinding
 
     private lateinit var queue: RequestQueue
+
+    private lateinit var obdConnection : ObdConnection
 
     // weather url to get JSON
     var weather_url1 = ""
@@ -44,15 +53,14 @@ class MainActivity : AppCompatActivity(){
     // OSM url for API
     var osm_url = ""
 
-
-
     // A reference to the service used to get location updates.
-    private var mService: Geolocation? = null
+    private var mService: LiveDataService? = null
     // Tracks the bound state of the service.
     private var mBound = false
 
     private var latitude : Double = 0.0
     private var longitude : Double = 0.0
+    @OptIn(DelicateCoroutinesApi::class)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         //setContentView(R.layout.activity_main)
@@ -62,12 +70,30 @@ class MainActivity : AppCompatActivity(){
 
         // Check which permissions is needed to ask to the user.
         val getPermission = getRequestPermission(LOCATION_PERMISSIONS, onGranted = {subscribeToService()})
+        val requestPermission: (() -> Unit) -> () -> Unit = { onDenied -> getRequestPermission(BLUETOOTH_PERMISSIONS, onDenied = onDenied) }
+
+        val futureConnection = showConnectionTypeDialog(this, requestPermission)
+
+        // futureConnection.thenAccept will run concurrently, so code beneath this will run at the same time
+        futureConnection.thenAccept {
+                connection ->
+            GlobalScope.launch(Dispatchers.IO) {
+                try {
+                    connection.connect(this@MainActivity)
+                    obdConnection = connection
+                    startLiveDataService()
+                } catch (e: Exception) {
+                    // Handle error, usually problem with connecting to OBD device }
+                }
+            }
+        }
+
         // Set click listener for the button
         binding.registerNewRide.setOnClickListener {
             startRegisterDriverActivity()
         }
         binding.refreshButton.setOnClickListener{
-            startListeningGeo()
+
             getPermission()
             try {
                 getRoad(queue, latitude, longitude) { road ->
@@ -101,15 +127,15 @@ class MainActivity : AppCompatActivity(){
         startActivity(intent)
         finish()
     }
-    private fun startListeningGeo(){
-        Intent(this, Geolocation::class.java).also { intent ->
+    private fun startLiveDataService(){
+        Intent(this, LiveDataService::class.java).also { intent ->
             bindService(intent, mServiceConnection, Context.BIND_AUTO_CREATE)
         }
     }
     // Monitors the state of the connection to the service.
     private val mServiceConnection: ServiceConnection = object : ServiceConnection {
         override fun onServiceConnected(name: ComponentName, service: IBinder) {
-            val binder: Geolocation.LocalBinder = service as Geolocation.LocalBinder
+            val binder: LiveDataService.LocalBinder = service as LiveDataService.LocalBinder
             mService = binder.getService()
             mBound = true
             //subscribeToService()
@@ -123,35 +149,23 @@ class MainActivity : AppCompatActivity(){
             Log.i(TAG, "Service does not work")
         }
     }
-    private fun updateUI(lat : Double, long: Double, address: String)  {
+    private fun updateLatLong(lat : Double, long: Double)  {
         latitude = lat
         longitude = long
 
-        binding.apply {
-            longitudeText.text = "Longitude: $long"
-            latitudeText.text = "Longitude: $lat"
-            //addressTextField?.editText?.setText(address)
-        }
     }
     private fun subscribeToService(){
         Log.i(TAG, "service works???")
-        mService?.subscribeToLocationUpdates(
-            {
-                    lastLocation ->
-                // Change the color of the default marker to blue
-                updateUI(lastLocation.latitude, lastLocation.longitude , "")
-                weather_url1 = "https://api.weatherbit.io/v2.0/current?" + "lat=" + lastLocation?.latitude + "&lon=" + lastLocation?.longitude + "&key=" + api_id1
-            },
-            {
-                    lat, long, address ->
-                updateUI(lat, long , address)
-            }
-
-
-        )
+        mService?.subscribeToLocationUpdates(obdConnection, queue, withSound = false,
+        { lat, long ->
+            updateLatLong(lat, long)
+        },{
+            lat, long ->
+            weather_url1 = "https://api.weatherbit.io/v2.0/current?lat=$lat&lon=$long&key=$api_id1"
+        })
     }
 
-    fun getWeatherInfo(queue: RequestQueue) {
+    private fun getWeatherInfo(queue: RequestQueue) {
         val url: String = weather_url1
         Log.e("lat", url)
 

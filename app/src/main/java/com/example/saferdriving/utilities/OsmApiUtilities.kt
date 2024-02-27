@@ -6,7 +6,7 @@ import com.android.volley.RequestQueue
 import com.android.volley.toolbox.StringRequest
 import com.example.saferdriving.dataClasses.Road
 import com.example.saferdriving.enums.RoadType
-import com.example.saferdriving.services.Geolocation.Companion.TAG
+import com.example.saferdriving.services.LiveDataService.Companion.TAG
 import org.json.JSONObject
 import java.net.URLEncoder
 
