@@ -4,6 +4,7 @@ import android.content.Intent
 import android.os.Bundle
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import com.example.saferdriving.dataClasses.BasicInfo
 import com.example.saferdriving.dataClasses.RideInfo
 import com.example.saferdriving.databinding.ActivityRegisterDriverBinding
 import com.google.firebase.database.DatabaseReference
@@ -36,23 +37,12 @@ class RegisterDriver : AppCompatActivity() {
             val residence = binding.editTextResidence.text.toString()
             val job = binding.editTextJob.text.toString()
 
-            // Retrieve air temperature and air pressure from environment sensors
-            val pressure = intent.getIntExtra("pressure", 0)
-            val temperature = intent.getIntExtra("temperature", 0)
-            val windSpeed = intent.getIntExtra("windSpeed", 0)
-            val weatherDescription = intent.getStringExtra("weatherDescription")
-
-
             // Create a new Driver object
-            val newRideInfo = RideInfo(
+            val newBasicInfo = BasicInfo(
                 age = age,
                 drivingExperience = drivingExperience,
                 residence = residence,
                 job = job,
-                airPressure = pressure,
-                airTemperature = temperature,
-                windSpeed = windSpeed,
-                weatherDescription = weatherDescription
                 // Add other properties as needed
             )
 
@@ -62,7 +52,7 @@ class RegisterDriver : AppCompatActivity() {
             val driverId = newDriverRef.key // Get the auto-generated ID
 
             // Set the value of the newly created driver using the retrieved ID
-            newDriverRef.setValue(newRideInfo)
+            newDriverRef.setValue(newBasicInfo)
                 .addOnSuccessListener {
                     Toast.makeText(this, "Driver added successfully!", Toast.LENGTH_SHORT).show()
                     if (driverId != null) {

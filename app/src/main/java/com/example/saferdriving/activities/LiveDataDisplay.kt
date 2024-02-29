@@ -20,6 +20,7 @@ import com.example.saferdriving.databinding.ActivityLiveDataDisplayBinding
 import androidx.core.content.PermissionChecker
 import com.example.saferdriving.BuildConfig
 import com.example.saferdriving.classes.ObdConnection
+import com.example.saferdriving.dataClasses.WeatherInfo
 import com.example.saferdriving.services.TimerService
 import com.example.saferdriving.services.LiveDataService
 import com.example.saferdriving.services.LiveDataService.Companion.TAG
@@ -27,6 +28,9 @@ import com.example.saferdriving.utilities.BLUETOOTH_PERMISSIONS
 import com.example.saferdriving.utilities.LOCATION_PERMISSIONS
 import com.example.saferdriving.utilities.getRequestPermission
 import com.example.saferdriving.utilities.showConnectionTypeDialog
+import com.google.firebase.database.DatabaseReference
+import com.google.firebase.database.ktx.database
+import com.google.firebase.ktx.Firebase
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
@@ -57,6 +61,8 @@ class LiveDataDisplay : AppCompatActivity() {
     private var temperatureInCelsius : Int? = null   //celsius
     private var windspeedInMS : Int? = null //m/s
     private var weatherDiscription : String = ""
+
+
 
     //OBD
     private lateinit var obdConnection : ObdConnection
@@ -98,6 +104,16 @@ class LiveDataDisplay : AppCompatActivity() {
             }
         }
 
+        //database
+        val parentNode = if (intent.getBooleanExtra("withSound", false)){
+            "data_with_sound"
+        } else {
+            "data_without_sound"
+        }
+        val driverID = intent.getStringExtra("driverID") ?: "no driver"
+        val database: DatabaseReference = Firebase.database("https://safer-driving-default-rtdb.europe-west1.firebasedatabase.app/").reference.child(parentNode).child("drivers").child(driverID).child("weather-info")
+
+
         mediaPlayer = MediaPlayer.create(this, R.raw.sound)
 
 
@@ -105,8 +121,10 @@ class LiveDataDisplay : AppCompatActivity() {
             playAudio()
         }
         binding.endRecording.setOnClickListener {
+            val weatherInfo = WeatherInfo(pressureInMilliBars, temperatureInCelsius, windspeedInMS, weatherDiscription)
+            database.setValue(weatherInfo)
 
-            //pauseAudio()
+            startMainActivity()
         }
 
         binding.resetButton.setOnClickListener { resetTimer() }
@@ -172,7 +190,6 @@ class LiveDataDisplay : AppCompatActivity() {
         {
             time = intent.getDoubleExtra(TimerService.TIME_EXTRA, 0.0)
             binding.timeTV.text = getTimeStringFromDouble(time)
-            Log.d(TAG, "what is the time? $time")
         }
     }
 
@@ -204,32 +221,33 @@ class LiveDataDisplay : AppCompatActivity() {
         }
 
         override fun onServiceDisconnected(name: ComponentName) {
-            mService?.unsubscribeToLocationUpdates()
             mService = null
-            mBound = false
             Log.i(TAG, "Service does not work")
         }
     }
     private fun updateLatLong(lat : Double, long: Double)  {
         latitude = lat
         longitude = long
+        getWeatherInfo(queue)
     }
     private fun subscribeToService(){
         Log.i(TAG, "service works???")
         val driverID = intent.getStringExtra("driverID") ?: return
         val withSound = intent.getBooleanExtra("withSound", false)
-        mService?.subscribeToLocationUpdates(obdConnection, queue, withSound, driverID,
+        mService?.subscribeToLocationUpdates(obdConnection, queue, withSound, driverID)
             { lat, long ->
-                updateLatLong(lat, long)
-            },{
-                    lat, long ->
                 weather_url1 = "https://api.weatherbit.io/v2.0/current?lat=$lat&lon=$long&key=$api_id1"
-            })
+                updateLatLong(lat, long)
+            }
     }
     override fun onDestroy() {
+        Log.i(TAG, "inside onDestroy")
         super.onDestroy()
         if (mBound) {
+            Log.i(TAG, "onDestroy disconnect service")
             unbindService(mServiceConnection)
+            mService?.unsubscribeToLocationUpdates()
+            resetTimer()
             mBound = false
         }
     }
@@ -275,7 +293,12 @@ class LiveDataDisplay : AppCompatActivity() {
         queue.add(stringReq)
     }
 
-
-
-
+    private fun startMainActivity() {
+        val intent = Intent(
+            this,
+            MainActivity::class.java
+        )
+        startActivity(intent)
+        finish()
+    }
 }

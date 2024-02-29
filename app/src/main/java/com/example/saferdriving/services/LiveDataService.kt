@@ -17,7 +17,9 @@ import android.util.Log
 import com.android.volley.RequestQueue
 import com.example.saferdriving.classes.ObdConnection
 import com.example.saferdriving.dataClasses.Acceleration
+import com.example.saferdriving.dataClasses.LocationOfSpeeding
 import com.example.saferdriving.dataClasses.OBD
+import com.example.saferdriving.dataClasses.RideInfo
 import com.example.saferdriving.dataClasses.Road
 import com.example.saferdriving.dataClasses.SpeedAndAcceleration
 import com.example.saferdriving.enums.RoadType
@@ -36,13 +38,14 @@ import java.util.*
 
 class LiveDataService : Service(){
     //Sound
-    var withSound: Boolean = false
+    private var withSound: Boolean = false
 
     //OBD data
     var speed: ObdResponse? = null
     //var acceleration: Acceleration? = null
     var time: Long? = null
     var speedAndAccelerationsList: MutableList<SpeedAndAcceleration> = mutableListOf()
+    var speedingSecondsList: MutableList<LocationOfSpeeding> = mutableListOf()
     var roadList: MutableList<Road> = mutableListOf()
     var obdConnection: ObdConnection? = null
     var longitude: Double? = null
@@ -50,6 +53,8 @@ class LiveDataService : Service(){
     var currentRoad: Road? = null
     //Road
     var queue: RequestQueue? = null
+
+    var isSpeeding: Boolean = false
 
     var topSpeed: Int = 0
     var topSpeedCity: Int = 0
@@ -60,6 +65,9 @@ class LiveDataService : Service(){
     var amountOfSpeedingCity: Int = 0
     var amountOfSpeedingCountryRoad: Int = 0
     var amountOfSpeedingHighway: Int = 0
+
+    var topLocalSpeed: Int = 0
+    var localSecondsOverSpeed: Long? = null
 
     private var startTime: Long = 0
 
@@ -76,9 +84,6 @@ class LiveDataService : Service(){
      */
     private lateinit var mLocationCallback: LocationCallback
 
-
-
-    private var updateFunc: (Double, Double) -> Unit = {_: Double, _: Double -> }
     companion object {
         val TAG = LiveDataService::class.java.simpleName
     }
@@ -118,7 +123,6 @@ class LiveDataService : Service(){
      */
     @OptIn(DelicateCoroutinesApi::class)
     private fun startLocationAware() {
-        Log.i(TAG, "Inside startLocationAware")
         // Show a dialog to ask the user to allow the application to access the device's location.
         // Start receiving location updates.
         mFusedLocationClient = LocationServices
@@ -145,15 +149,14 @@ class LiveDataService : Service(){
                             currentRoad = road
                         }
                     }
-                    updateFunc(location.latitude, location.longitude)
                 }
 
                 GlobalScope.launch(Dispatchers.IO) {
                     if (speed != null && time != null) {
                         val response = obdConnection?.getSpeedAndAcceleration(speed!!, time!!, 500)
                         response?.let { speedAndAcceleration ->
-                            var obdRecording = OBD(speedAndAcceleration.speed.value.toInt(), speedAndAcceleration.acceleration.value, null)
-                            var timestamp = (speedAndAcceleration.timeCaptured - startTime)
+                            val obdRecording = OBD(speedAndAcceleration.speed.value.toInt(), speedAndAcceleration.acceleration.value, null)
+                            val timestamp = (speedAndAcceleration.timeCaptured - startTime)
                             // Convert timestamp to Date object
                             val date = Date(timestamp)
                             // Create a SimpleDateFormat object with the desired format
@@ -167,11 +170,27 @@ class LiveDataService : Service(){
                             speed = response.speed
                             time = response.timeCaptured
                             val speedVal = speed!!.value.toInt()
-                            if (currentRoad != null && currentRoad!!.speedLimit > speedVal) {
+                            if (currentRoad != null && currentRoad!!.speedLimit < speedVal) {
                                 //sound
-                                //checkbox
                                 //speeding
+                                if (speedVal > topLocalSpeed) topLocalSpeed = speedVal
+                                if (!isSpeeding){
+                                    localSecondsOverSpeed = speedAndAcceleration.timeCaptured
+                                }
+
+                                isSpeeding = true
+
+                            } else if (isSpeeding){
+                                val secondsSpeeding = (speedAndAcceleration.timeCaptured - localSecondsOverSpeed!!) / 1000
+
+                                val locationOfSpeeding = LocationOfSpeeding(latitude, longitude, currentRoad!!.name, topLocalSpeed, currentRoad!!.type, secondsSpeeding.toInt())
+                                database.child("speedings").child(formattedTime).setValue(locationOfSpeeding)
+
+                                isSpeeding = false
+                                speedingSecondsList.add(locationOfSpeeding)
+                                topLocalSpeed = 0 //reset next speed
                             }
+
                             if (speedVal > topSpeed) topSpeed = speedVal
 
                             if (currentRoad != null){
@@ -195,12 +214,11 @@ class LiveDataService : Service(){
      * Subscribes this application to get the location changes via the `locationCallback()`.
      */
     @OptIn(DelicateCoroutinesApi::class)
-    public fun subscribeToLocationUpdates(obdConnection: ObdConnection, queue: RequestQueue, withSound: Boolean, driverID:String, updateFunc: (Double, Double) -> Unit, initFunc: (Double, Double) -> Unit)  {
+    public fun subscribeToLocationUpdates(obdConnection: ObdConnection, queue: RequestQueue, withSound: Boolean, driverID:String, initFunc: (Double, Double) -> Unit)  {
         // Check if the user allows the application to access the location-aware resources.
         if (checkPermission())
             return
         Log.i(TAG, "location permissions are checked")
-        this.updateFunc = updateFunc
         this.obdConnection = obdConnection
         this.queue = queue
         this.withSound = withSound
@@ -242,8 +260,48 @@ class LiveDataService : Service(){
      */
     public fun unsubscribeToLocationUpdates() {
         // Unsubscribe to location changes.
-
-
         mFusedLocationClient.removeLocationUpdates(mLocationCallback)
+        database = database.parent!!.child("ride-info")
+
+        val highwaySpeedingList = speedingSecondsList.filter { speeding -> speeding.roadType == RoadType.MOTORWAY }
+        val countryRoadSpeedingList = speedingSecondsList.filter { speeding -> speeding.roadType == RoadType.RURAL }
+        val citySpeedingList = speedingSecondsList.filter { speeding -> speeding.roadType == RoadType.CITY }
+        val totalSecondsSpeeding = speedingSecondsList.fold(0) { acc, speeding -> acc + speeding.amountOfSecondsSpeeding!! }
+        val totalSecondsSpeedingHighWay = highwaySpeedingList.fold(0) { acc, speeding -> acc + speeding.amountOfSecondsSpeeding!! }
+        val totalSecondsSpeedingCountryRoad = countryRoadSpeedingList.fold(0) { acc, speeding -> acc + speeding.amountOfSecondsSpeeding!! }
+        val totalSecondsSpeedingCity = citySpeedingList.fold(0) { acc, speeding -> acc + speeding.amountOfSecondsSpeeding!! }
+
+        val totalAverageSecondsSpeeding = if (speedingSecondsList.isNotEmpty()) (totalSecondsSpeeding / speedingSecondsList.size) else 0
+        val averageSecondsSpeedingInHighway = if (highwaySpeedingList.isNotEmpty()) (totalSecondsSpeedingHighWay / highwaySpeedingList.size) else 0
+        val averageSecondsSpeedingInCountryRoad = if (countryRoadSpeedingList.isNotEmpty()) (totalSecondsSpeedingCountryRoad / countryRoadSpeedingList.size) else 0
+        val averageSecondsSpeedingInCity = if (citySpeedingList.isNotEmpty()) (totalSecondsSpeedingCity / citySpeedingList.size) else 0
+
+        val rideInfo = RideInfo(
+            amountOfMinutesDriving = ((System.currentTimeMillis() - startTime) / 60000).toInt(),
+            averageFuelConsumption = 0,
+
+            amountOfSpeedings = speedingSecondsList.size,
+            amountOfSpeedingsHighway = highwaySpeedingList.size,
+            amountOfSpeedingsCountryRoad = countryRoadSpeedingList.size,
+            amountOfSpeedingsCity = citySpeedingList.size,
+
+            overallTopSpeed = topSpeed,
+            topSpeedHighway = topSpeedHighway,
+            topSpeedCountryRoad = topSpeedCountryRoad,
+            topSpeedCity = topSpeedCity,
+
+            totalAmountOfSecondsSpeeding = totalSecondsSpeeding,
+            amountOfSecondsSpeedingInHighway = totalSecondsSpeedingHighWay,
+            amountOfSecondsSpeedingInCountryRoad = totalSecondsSpeedingCountryRoad,
+            amountOfSecondsSpeedingInCity = totalSecondsSpeedingCity,
+
+            totalAverageSecondsSpeeding = totalAverageSecondsSpeeding,
+            averageSecondsSpeedingInHighway = averageSecondsSpeedingInHighway,
+            averageSecondsSpeedingInCountryRoad = averageSecondsSpeedingInCountryRoad,
+            averageSecondsSpeedingInCity = averageSecondsSpeedingInCity)
+
+        database.setValue(rideInfo)
     }
+
+
 }

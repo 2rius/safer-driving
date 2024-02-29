@@ -16,7 +16,6 @@ class TimerService : Service()
     {
 
         val time = intent.getDoubleExtra(TIME_EXTRA, 0.0)
-        Log.d(TAG, "Time value received by Timer service: $time") // Add this line
         timer.scheduleAtFixedRate(TimeTask(time), 0, 1000)
         return START_NOT_STICKY
     }
@@ -36,7 +35,6 @@ class TimerService : Service()
             time++
             intent.putExtra(TIME_EXTRA, time)
             sendBroadcast(intent)
-            Log.d(TAG, "Is time increamented? $time")
         }
     }
 
