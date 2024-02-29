@@ -129,6 +129,7 @@ class LiveDataService : Service(){
              */
             override fun onLocationResult(locationResult: LocationResult) {
                 super.onLocationResult(locationResult)
+                Log.d(TAG, "RUNNING THE LOOOOOOP")
                 locationResult.lastLocation?.let { location ->
                     longitude = location.longitude
                     latitude = location.latitude

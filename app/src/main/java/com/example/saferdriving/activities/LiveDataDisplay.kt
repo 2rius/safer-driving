@@ -89,15 +89,16 @@ class LiveDataDisplay : AppCompatActivity() {
                 try {
                     connection.connect(this@LiveDataDisplay)
                     obdConnection = connection
+                    getPermission()
                     startLiveDataService()
                 } catch (e: Exception) {
+                    e.message?.let { Log.d(TAG, it) }
                     // Handle error, usually problem with connecting to OBD device }
                 }
             }
         }
 
         binding.refreshButton.setOnClickListener{
-            getPermission()
             Log.i(TAG, "hello")
         }
 
