@@ -98,18 +98,15 @@ class LiveDataDisplay : AppCompatActivity() {
             }
         }
 
-        binding.refreshButton.setOnClickListener{
-            Log.i(TAG, "hello")
-        }
-
         mediaPlayer = MediaPlayer.create(this, R.raw.sound)
 
 
         binding.startSound.setOnClickListener {
             playAudio()
         }
-        binding.pauseSound.setOnClickListener {
-            pauseAudio()
+        binding.endRecording.setOnClickListener {
+
+            //pauseAudio()
         }
 
         binding.resetButton.setOnClickListener { resetTimer() }
@@ -219,7 +216,9 @@ class LiveDataDisplay : AppCompatActivity() {
     }
     private fun subscribeToService(){
         Log.i(TAG, "service works???")
-        mService?.subscribeToLocationUpdates(obdConnection, queue, withSound = false,
+        val driverID = intent.getStringExtra("driverID") ?: return
+        val withSound = intent.getBooleanExtra("withSound", false)
+        mService?.subscribeToLocationUpdates(obdConnection, queue, withSound, driverID,
             { lat, long ->
                 updateLatLong(lat, long)
             },{

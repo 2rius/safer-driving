@@ -1,6 +1,7 @@
 package com.example.saferdriving.services
 
 import android.Manifest
+import android.annotation.SuppressLint
 import android.app.Service
 import android.content.Intent
 import android.os.IBinder
@@ -16,6 +17,7 @@ import android.util.Log
 import com.android.volley.RequestQueue
 import com.example.saferdriving.classes.ObdConnection
 import com.example.saferdriving.dataClasses.Acceleration
+import com.example.saferdriving.dataClasses.OBD
 import com.example.saferdriving.dataClasses.Road
 import com.example.saferdriving.dataClasses.SpeedAndAcceleration
 import com.example.saferdriving.enums.RoadType
@@ -28,6 +30,7 @@ import kotlinx.coroutines.launch
 import com.google.firebase.database.DatabaseReference
 import com.google.firebase.database.ktx.database
 import com.google.firebase.ktx.Firebase
+import java.text.SimpleDateFormat
 import java.util.*
 
 
@@ -57,6 +60,8 @@ class LiveDataService : Service(){
     var amountOfSpeedingCity: Int = 0
     var amountOfSpeedingCountryRoad: Int = 0
     var amountOfSpeedingHighway: Int = 0
+
+    private var startTime: Long = 0
 
     //Firebase
     var database: DatabaseReference = Firebase.database("https://safer-driving-default-rtdb.europe-west1.firebasedatabase.app/").reference
@@ -113,7 +118,7 @@ class LiveDataService : Service(){
      */
     @OptIn(DelicateCoroutinesApi::class)
     private fun startLocationAware() {
-
+        Log.i(TAG, "Inside startLocationAware")
         // Show a dialog to ask the user to allow the application to access the device's location.
         // Start receiving location updates.
         mFusedLocationClient = LocationServices
@@ -127,6 +132,7 @@ class LiveDataService : Service(){
              *
              * @param locationResult The last known location.
              */
+            @SuppressLint("SimpleDateFormat")
             override fun onLocationResult(locationResult: LocationResult) {
                 super.onLocationResult(locationResult)
                 Log.d(TAG, "RUNNING THE LOOOOOOP")
@@ -145,7 +151,19 @@ class LiveDataService : Service(){
                 GlobalScope.launch(Dispatchers.IO) {
                     if (speed != null && time != null) {
                         val response = obdConnection?.getSpeedAndAcceleration(speed!!, time!!, 500)
-                        response?.let { speedAndAcceleration -> speedAndAccelerationsList.add(speedAndAcceleration)
+                        response?.let { speedAndAcceleration ->
+                            var obdRecording = OBD(speedAndAcceleration.speed.value.toInt(), speedAndAcceleration.acceleration.value, null)
+                            var timestamp = (speedAndAcceleration.timeCaptured - startTime)
+                            // Convert timestamp to Date object
+                            val date = Date(timestamp)
+                            // Create a SimpleDateFormat object with the desired format
+                            val sdf = SimpleDateFormat("mm:ss")
+                            // Set the time zone to UTC (optional, depending on your requirement)
+                            sdf.timeZone = TimeZone.getTimeZone("UTC")
+                            // Format the date as a string with the desired format
+                            val formattedTime = sdf.format(date)
+                            database.child("obd").child(formattedTime).setValue(obdRecording)
+                            speedAndAccelerationsList.add(speedAndAcceleration)
                             speed = response.speed
                             time = response.timeCaptured
                             val speedVal = speed!!.value.toInt()
@@ -177,11 +195,11 @@ class LiveDataService : Service(){
      * Subscribes this application to get the location changes via the `locationCallback()`.
      */
     @OptIn(DelicateCoroutinesApi::class)
-    public fun subscribeToLocationUpdates(obdConnection: ObdConnection, queue: RequestQueue, withSound: Boolean, updateFunc: (Double, Double) -> Unit, initFunc: (Double, Double) -> Unit)  {
+    public fun subscribeToLocationUpdates(obdConnection: ObdConnection, queue: RequestQueue, withSound: Boolean, driverID:String, updateFunc: (Double, Double) -> Unit, initFunc: (Double, Double) -> Unit)  {
         // Check if the user allows the application to access the location-aware resources.
         if (checkPermission())
             return
-
+        Log.i(TAG, "location permissions are checked")
         this.updateFunc = updateFunc
         this.obdConnection = obdConnection
         this.queue = queue
@@ -192,12 +210,16 @@ class LiveDataService : Service(){
             "data_without_sound"
         }
 
-        database = database.child(parentNode)
+        database = database.child(parentNode).child("drivers").child(driverID).child("recordings")
+        Log.i(TAG, "created child node")
 
         GlobalScope.launch(Dispatchers.IO) {
             speed = obdConnection.getSpeed()
+            Log.i(TAG, "got speed")
         }
         time = System.currentTimeMillis()
+        startTime = time as Long
+        Log.i(TAG, "Got time")
 
         // Sets the accuracy and desired interval for active location updates.
         val locationRequest = LocationRequest
