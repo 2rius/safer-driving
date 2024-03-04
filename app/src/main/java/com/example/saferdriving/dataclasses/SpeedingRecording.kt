@@ -1,8 +1,8 @@
-package com.example.saferdriving.dataClasses
+package com.example.saferdriving.dataclasses
 
 import com.example.saferdriving.enums.RoadType
 
-data class LocationOfSpeeding(
+data class SpeedingRecording(
     var lat: Double? = null,
     var long: Double? = null,
     var roadName: String? = null,

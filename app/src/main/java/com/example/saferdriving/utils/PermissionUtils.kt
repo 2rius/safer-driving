@@ -1,34 +1,12 @@
-package com.example.saferdriving.utilities
+package com.example.saferdriving.utils
 
-import android.Manifest
 import android.content.Context
 import android.content.pm.PackageManager
-import android.os.Build
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
-
-/**
- * Array of Bluetooth permissions required by the application. This will vary depending on the
- * Android SDK version. In SDK version 23 and above, only [Manifest.permission.BLUETOOTH_CONNECT]
- * permission is needed. On older versions, [Manifest.permission.BLUETOOTH] and
- * [Manifest.permission.BLUETOOTH_ADMIN] permissions are required
- */
-val BLUETOOTH_PERMISSIONS = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-    arrayOf(
-        Manifest.permission.BLUETOOTH_CONNECT
-    )
-} else {
-    arrayOf(
-        Manifest.permission.BLUETOOTH,
-        Manifest.permission.BLUETOOTH_ADMIN
-    )
-}
-
-val LOCATION_PERMISSIONS = arrayOf (
-            Manifest.permission.ACCESS_FINE_LOCATION,
-            Manifest.permission.ACCESS_COARSE_LOCATION
-        )
+import androidx.core.content.PermissionChecker
+import com.example.saferdriving.enums.Permissions
 
 /**
  * Returns a function that requests the specified permissions and executes the provided

@@ -35,9 +35,9 @@
             android:exported="false"></service>
 
         <activity
-            android:name=".activities.RegisterDriver"
+            android:name=".activities.RegisterDriverActivity"
             android:exported="false" />
-        <activity android:name=".activities.LiveDataDisplay" />
+        <activity android:name=".activities.LiveDataActivity" />
         <activity
             android:name=".activities.MainActivity"
             android:exported="true">

@@ -18,6 +18,13 @@ import java.util.UUID
  */
 class BluetoothObdConnection(private val ip: String = "00:1D:A5:05:74:E0") : ObdConnection() {
     /**
+     * Companion object defining constants for the class, namely DEFAULT_RFCOMM_UUID.
+     */
+    companion object {
+        const val DEFAULT_RFCOMM_UUID = "00001101-0000-1000-8000-00805F9B34FB"
+    }
+
+    /**
      * Establishes a Bluetooth connection with the OBD-II device.
      * It is executed asynchronously in IO dispatcher to avoid blocking the main thread.
      * It creates a socket to the specified bluetooth address of the OBD-II device and initializes
@@ -41,7 +48,7 @@ class BluetoothObdConnection(private val ip: String = "00:1D:A5:05:74:E0") : Obd
             ) {
                 throw SecurityException("Bluetooth permission not granted")
             } else {
-                bluetoothDevice.createRfcommSocketToServiceRecord(UUID.fromString("00001101-0000-1000-8000-00805F9B34FB"))
+                bluetoothDevice.createRfcommSocketToServiceRecord(UUID.fromString(DEFAULT_RFCOMM_UUID))
             }
 
             bluetoothSocket.connect()

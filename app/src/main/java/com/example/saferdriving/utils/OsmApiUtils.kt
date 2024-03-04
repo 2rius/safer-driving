@@ -1,12 +1,11 @@
-package com.example.saferdriving.utilities
+package com.example.saferdriving.utils
 
-import android.util.Log
+import android.location.Location
 import com.android.volley.Request
 import com.android.volley.RequestQueue
 import com.android.volley.toolbox.StringRequest
-import com.example.saferdriving.dataClasses.Road
+import com.example.saferdriving.dataclasses.Road
 import com.example.saferdriving.enums.RoadType
-import com.example.saferdriving.services.LiveDataService.Companion.TAG
 import org.json.JSONObject
 import java.net.URLEncoder
 
@@ -21,33 +20,29 @@ private const val BASE_URL = "https://overpass-api.de/api/interpreter?data="
 private const val RADIUS = 10
 
 /**
- * Callback function to get the road of a specific latitude and longitude.
+ * Callback function to get the road of a specific location.
  *
  * @param queue The queue that should handle the API call
- * @param latitude The latitude to which a road should be found
- * @param longitude The longitude to which a road should be found
+ * @param location The location to which a road should be found
  * @param callback The callback function that will be called when the request is done
  */
 fun getRoad(
     queue: RequestQueue,
-    latitude: Double,
-    longitude: Double,
+    location: Location,
     callback: (Road) -> Unit
 ) {
-    val reqUrl = getUrl(latitude, longitude)
+    val reqUrl = getUrl(location)
     var roadType: RoadType? = null
     var tags: JSONObject? = null
     var name = "Unknown"
     var speedLimit: Int? = null
-
-    Log.i(TAG, reqUrl)
 
     val stringReq = StringRequest(Request.Method.GET, reqUrl, { response ->
         val fullObj = JSONObject(response)
         val elements = fullObj.getJSONArray("elements")
 
         if (elements.length() < 1) {
-            callback(Road(latitude, longitude, name, RoadType.RURAL))
+            callback(Road(location.latitude, location.longitude, name, RoadType.RURAL))
             return@StringRequest
         } else {
             for (i in 0 until elements.length()) {
@@ -73,11 +68,11 @@ fun getRoad(
         if (speedLimit == null)
             speedLimit = roadType!!.defaultSpeedLimit
 
-        val road = Road(latitude, longitude, name, roadType!!, speedLimit!!)
+        val road = Road(location.latitude, location.longitude, name, roadType!!, speedLimit!!)
 
         callback(road)
     }, { err ->
-        Log.i(TAG, err.toString())
+        // TODO: Handle error
     })
 
     queue.add(stringReq)
@@ -86,15 +81,14 @@ fun getRoad(
 /**
  * Gets the URL for an API request given a latitude and longitude.
  *
- * @param latitude The latitude of the location to be requested.
- * @param longitude The longitude of the location to be requested.
+ * @param location The location to be requested.
  * @return The full url that can be called in an API request.
  */
-private fun getUrl(latitude: Double, longitude: Double): String {
+private fun getUrl(location: Location): String {
     val query = """
             [out:json];
             way
-              (around:$RADIUS,$latitude,$longitude)
+              (around:$RADIUS,${location.latitude},${location.longitude})
               [highway]; 
             out center;
         """.trimIndent()
@@ -105,7 +99,7 @@ private fun getUrl(latitude: Double, longitude: Double): String {
 }
 
 /**
- * Gets the roadtype from the specified tags on the OSM object.
+ * Gets the road type from the specified tags on the OSM object.
  * Does this from the specifications at https://wiki.openstreetmap.org/wiki/Default_speed_limits.
  *
  * @param tags The tags that should be used to determine the road type

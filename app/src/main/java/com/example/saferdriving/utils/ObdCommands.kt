@@ -1,4 +1,4 @@
-package com.example.saferdriving.classes
+package com.example.saferdriving.utils
 
 import com.github.eltonvs.obd.command.ObdCommand
 import com.github.eltonvs.obd.command.ObdRawResponse

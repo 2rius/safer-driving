@@ -2,8 +2,6 @@ package com.example.saferdriving.services
 import android.app.Service
 import android.content.Intent
 import android.os.IBinder
-import android.util.Log
-import com.example.saferdriving.services.LiveDataService.Companion.TAG
 import java.util.*
 
 class TimerService : Service()
@@ -23,7 +21,7 @@ class TimerService : Service()
 
     override fun onDestroy()
     {
-        timer?.cancel()
+        timer.cancel()
         super.onDestroy()
     }
 

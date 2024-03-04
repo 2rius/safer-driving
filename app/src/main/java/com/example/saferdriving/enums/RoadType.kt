@@ -3,7 +3,7 @@ package com.example.saferdriving.enums
 /**
  * Enum class for differentiating between the 3 types of roads.
  *
- * @property defaultSpeed The default speeds on the different roads (in Denmark).
+ * @property defaultSpeedLimit The default speeds on the different roads (in Denmark).
  */
 enum class RoadType(val defaultSpeedLimit: Int) {
     CITY(50),

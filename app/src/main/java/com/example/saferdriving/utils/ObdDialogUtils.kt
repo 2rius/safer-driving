@@ -1,4 +1,4 @@
-package com.example.saferdriving.utilities
+package com.example.saferdriving.utils
 
 import android.app.AlertDialog
 import android.content.Context
