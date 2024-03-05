@@ -56,34 +56,39 @@ class LiveDataActivity : AppCompatActivity() {
     @OptIn(DelicateCoroutinesApi::class)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        queue = Volley.newRequestQueue(this)
         binding = ActivityLiveDataDisplayBinding.inflate(layoutInflater)
         setContentView(binding.root)
+        if (savedInstanceState == null) {
+            queue = Volley.newRequestQueue(this)
 
-        // Check which permissions is needed to ask to the user.
-        val requestLocationPermission = getRequestPermission(LOCATION.permissions, onGranted = {subscribeToService()})
-        val requestBluetoothPermission: (() -> Unit) -> () -> Unit = { onDenied -> getRequestPermission(BLUETOOTH.permissions, onDenied = onDenied) }
 
-        val futureConnection = showConnectionTypeDialog(this, requestBluetoothPermission)
 
-        val mgr = getSystemService(Context.POWER_SERVICE) as PowerManager
-        wakeLock = mgr.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "SaferDriving:LiveData")
-        wakeLock.acquire(20*60*1000L /*20 minutes*/)
+            // Check which permissions is needed to ask to the user.
+            val requestLocationPermission =
+                getRequestPermission(LOCATION.permissions, onGranted = { subscribeToService() })
+            val requestBluetoothPermission: (() -> Unit) -> () -> Unit =
+                { onDenied -> getRequestPermission(BLUETOOTH.permissions, onDenied = onDenied) }
 
-        // futureConnection.thenAccept will run concurrently, so code beneath this will run at the same time
-        futureConnection.thenAccept {
-                connection ->
-            GlobalScope.launch(Dispatchers.IO) {
-                try {
-                    connection.connect(this@LiveDataActivity)
-                    obdConnection = connection
-                    requestLocationPermission()
-                    startLiveDataService()
+            val futureConnection = showConnectionTypeDialog(this, requestBluetoothPermission)
 
-                    serviceIntent = Intent(applicationContext, TimerService::class.java)
-                    startStopTimer()
-                } catch (e: Exception) {
-                    // Handle error, usually problem with connecting to OBD device }
+            val mgr = getSystemService(Context.POWER_SERVICE) as PowerManager
+            wakeLock = mgr.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "SaferDriving:LiveData")
+            wakeLock.acquire(20 * 60 * 1000L /*20 minutes*/)
+
+            // futureConnection.thenAccept will run concurrently, so code beneath this will run at the same time
+            futureConnection.thenAccept { connection ->
+                GlobalScope.launch(Dispatchers.IO) {
+                    try {
+                        connection.connect(this@LiveDataActivity)
+                        obdConnection = connection
+                        requestLocationPermission()
+                        startLiveDataService()
+
+                        serviceIntent = Intent(applicationContext, TimerService::class.java)
+                        startStopTimer()
+                    } catch (e: Exception) {
+                        // Handle error, usually problem with connecting to OBD device }
+                    }
                 }
             }
         }
@@ -96,6 +101,7 @@ class LiveDataActivity : AppCompatActivity() {
         }
 
         binding.endRecording.setOnClickListener {
+            wakeLock.release()
             startMainActivity()
         }
 
@@ -193,7 +199,6 @@ class LiveDataActivity : AppCompatActivity() {
     }
     override fun onDestroy() {
         super.onDestroy()
-        wakeLock.release()
         if (mBound) {
             unbindService(mServiceConnection)
             mService?.unsubscribeToLiveData()

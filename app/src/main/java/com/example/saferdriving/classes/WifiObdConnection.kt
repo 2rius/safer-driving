@@ -27,7 +27,8 @@ class WifiObdConnection(private val ip: String = "192.168.0.112", private val po
         context: Context
     ) {
         withContext(Dispatchers.IO) {
-            val wifiSocket = Socket(ip, port)
+            val wifiSocket = Socket(//ip
+                "192.168.136.33", port)
 
             val inputStream = wifiSocket.getInputStream()
             val outputStream = wifiSocket.getOutputStream()
