@@ -12,6 +12,7 @@ import androidx.core.content.PermissionChecker
 import com.android.volley.RequestQueue
 import com.example.saferdriving.classes.ObdConnection
 import com.example.saferdriving.dataclasses.Road
+import com.example.saferdriving.dataclasses.SpeedAndAcceleration
 import com.example.saferdriving.dataclasses.SpeedingRecording
 import com.example.saferdriving.enums.Permissions
 import com.example.saferdriving.enums.RoadType
@@ -195,6 +196,10 @@ class LiveDataService : Service(){
         mFusedLocationClient.removeLocationUpdates(mLocationCallback)
         isServiceActive = false
 
+        if (isSpeeding) {
+            time?.let { recordSpeeding(it) }
+        }
+
         firebaseManager.addRideInfo(
             startTime,
             topSpeed,
@@ -237,25 +242,7 @@ class LiveDataService : Service(){
                     isSpeeding = true
 
                 } else if (currentRoad != null && isSpeeding){
-                    val secondsSpeeding = (speedAndAcceleration.timeCaptured - localStartTime) / 1000
-                    val timeOfSpeedingStart = localStartTime - startTime
-
-                    val speedingRecording = firebaseManager.addSpeedingRecording(
-                        timeOfSpeedingStart,
-                        localLocation!!,
-                        localRoad!!,
-                        topSpeed,
-                        secondsSpeeding.toInt()
-                    )
-
-                    isSpeeding = false
-                    speedingSecondsList.add(speedingRecording)
-
-                    // Reset local info for next speeding
-                    localStartTime = 0
-                    localLocation = null
-                    localRoad = null
-                    topLocalSpeed = 0 // reset for next speed
+                    recordSpeeding(speedAndAcceleration.timeCaptured)
                 }
 
                 if (speedVal > topSpeed) topSpeed = speedVal
@@ -272,5 +259,30 @@ class LiveDataService : Service(){
                 }
             }
         }
+    }
+
+    private fun recordSpeeding(
+        endTime: Long
+    ) {
+        isSpeeding = false
+
+        val secondsSpeeding = (endTime - localStartTime) / 1000
+        val timeOfSpeedingStart = localStartTime - startTime
+
+        val speedingRecording = firebaseManager.addSpeedingRecording(
+            timeOfSpeedingStart,
+            localLocation!!,
+            localRoad!!,
+            topSpeed,
+            secondsSpeeding.toInt()
+        )
+
+        speedingSecondsList.add(speedingRecording)
+
+        // Reset local info for next speeding
+        localStartTime = 0
+        localLocation = null
+        localRoad = null
+        topLocalSpeed = 0 // reset for next speed
     }
 }
