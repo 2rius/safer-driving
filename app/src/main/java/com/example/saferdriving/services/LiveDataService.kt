@@ -5,6 +5,7 @@ import android.annotation.SuppressLint
 import android.app.Service
 import android.content.Intent
 import android.location.Location
+import android.media.MediaPlayer
 import android.os.Binder
 import android.os.IBinder
 import android.os.Looper
@@ -36,6 +37,7 @@ class LiveDataService : Service(){
     var speedingSecondsList: MutableList<SpeedingRecording> = mutableListOf()
     var roadList: MutableList<Road> = mutableListOf()
     var obdConnection: ObdConnection? = null
+    var mediaPlayer: MediaPlayer? = null
     var location: Location? = null
 
     var currentRoad: Road? = null
@@ -122,6 +124,8 @@ class LiveDataService : Service(){
                                 if (currentRoad != null && currentRoad!!.speedLimit < speedVal) {
                                     //sound
                                     //speeding
+                                    if(firebaseManager.getWithSound())
+                                        mediaPlayer?.start()
                                     if (speedVal > topLocalSpeed) topLocalSpeed = speedVal
                                     if (!isSpeeding){
                                         localSecondsOverSpeed = speedAndAcceleration.timeCaptured
@@ -171,6 +175,7 @@ class LiveDataService : Service(){
     @OptIn(DelicateCoroutinesApi::class)
     fun subscribeToLocationUpdates(
         obdConnection: ObdConnection,
+        mediaPlayer: MediaPlayer,
         queue: RequestQueue,
         initFunc: (Location) -> Unit
     )  {
@@ -183,8 +188,8 @@ class LiveDataService : Service(){
             return
 
         this.obdConnection = obdConnection
+        this.mediaPlayer = mediaPlayer
         this.queue = queue
-
         GlobalScope.launch(Dispatchers.IO) {
             speed = obdConnection.getSpeed()
         }

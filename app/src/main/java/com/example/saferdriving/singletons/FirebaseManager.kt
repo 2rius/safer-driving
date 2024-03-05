@@ -56,6 +56,10 @@ class FirebaseManager private constructor() {
         this.withSound = withSound
     }
 
+    fun getWithSound() : Boolean{
+        return withSound
+    }
+
     fun addObdRecording(
         timeOfRecording: Long,
         speedAndAcceleration: SpeedAndAcceleration
