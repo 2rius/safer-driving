@@ -1,6 +1,5 @@
 package com.example.saferdriving.services
 
-import android.Manifest
 import android.annotation.SuppressLint
 import android.app.Service
 import android.content.Intent
@@ -9,7 +8,6 @@ import android.media.MediaPlayer
 import android.os.Binder
 import android.os.IBinder
 import android.os.Looper
-import android.os.PowerManager.WakeLock
 import androidx.core.content.PermissionChecker
 import com.android.volley.RequestQueue
 import com.example.saferdriving.classes.ObdConnection
@@ -33,7 +31,7 @@ class LiveDataService : Service(){
 
     //OBD data
     var speed: ObdResponse? = null
-    //var acceleration: Acceleration? = null
+
     var time: Long? = null
     var speedingSecondsList: MutableList<SpeedingRecording> = mutableListOf()
     var roadList: MutableList<Road> = mutableListOf()
@@ -53,7 +51,9 @@ class LiveDataService : Service(){
     var topSpeedHighway: Int = 0
 
     var topLocalSpeed: Int = 0
-    var localSecondsOverSpeed: Long? = null
+    var localStartTime: Long? = null
+    var localLocation: Location? = null
+    var localRoad: Road? = null
 
     private var startTime: Long = 0
 
@@ -125,22 +125,29 @@ class LiveDataService : Service(){
                                 if (currentRoad != null && currentRoad!!.speedLimit < speedVal) {
                                     //sound
                                     //speeding
-                                    if(firebaseManager.getWithSound())
-                                        mediaPlayer?.start()
+
                                     if (speedVal > topLocalSpeed) topLocalSpeed = speedVal
                                     if (!isSpeeding){
-                                        localSecondsOverSpeed = speedAndAcceleration.timeCaptured
+                                        // If withSound is checked, play audio when the speeding starts
+                                        if(firebaseManager.getWithSound())
+                                            mediaPlayer?.start()
+
+                                        // Save info about when the speeding started
+                                        localStartTime = speedAndAcceleration.timeCaptured
+                                        localLocation = location
+                                        localRoad = currentRoad
                                     }
 
                                     isSpeeding = true
 
                                 } else if (currentRoad != null && isSpeeding){
-                                    val secondsSpeeding = (speedAndAcceleration.timeCaptured - localSecondsOverSpeed!!) / 1000
+                                    val secondsSpeeding = (speedAndAcceleration.timeCaptured - localStartTime!!) / 1000
+                                    val timeOfSpeedingStart = localStartTime!! - startTime
 
                                     val speedingRecording = firebaseManager.addSpeedingRecording(
-                                        timeOfResponse,
-                                        location,
-                                        currentRoad!!,
+                                        timeOfSpeedingStart,
+                                        localLocation!!,
+                                        localRoad!!,
                                         topSpeed,
                                         secondsSpeeding.toInt()
                                     )
