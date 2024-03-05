@@ -9,6 +9,7 @@ import android.media.MediaPlayer
 import android.os.Binder
 import android.os.IBinder
 import android.os.Looper
+import android.os.PowerManager.WakeLock
 import androidx.core.content.PermissionChecker
 import com.android.volley.RequestQueue
 import com.example.saferdriving.classes.ObdConnection

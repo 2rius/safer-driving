@@ -10,6 +10,8 @@ import android.os.IBinder
 import android.widget.Toast
 import android.content.IntentFilter
 import android.location.Location
+import android.os.PowerManager
+import android.os.PowerManager.WakeLock
 import androidx.appcompat.app.AppCompatActivity
 import com.example.saferdriving.R
 import com.example.saferdriving.databinding.ActivityLiveDataDisplayBinding
@@ -35,6 +37,8 @@ class LiveDataActivity : AppCompatActivity() {
     private lateinit var binding: ActivityLiveDataDisplayBinding
 
     private val firebaseManager = FirebaseManager.getInstance()
+
+    private lateinit var wakeLock: WakeLock
 
     private var mService: LiveDataService? = null
     // Tracks the bound state of the service.
@@ -66,6 +70,10 @@ class LiveDataActivity : AppCompatActivity() {
         val requestBluetoothPermission: (() -> Unit) -> () -> Unit = { onDenied -> getRequestPermission(BLUETOOTH.permissions, onDenied = onDenied) }
 
         val futureConnection = showConnectionTypeDialog(this, requestBluetoothPermission)
+
+        val mgr = getSystemService(Context.POWER_SERVICE) as PowerManager
+        wakeLock = mgr.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "SaferDriving:LiveData")
+        wakeLock.acquire(20*60*1000L /*20 minutes*/)
 
         // futureConnection.thenAccept will run concurrently, so code beneath this will run at the same time
         futureConnection.thenAccept {
@@ -190,6 +198,7 @@ class LiveDataActivity : AppCompatActivity() {
     }
     override fun onDestroy() {
         super.onDestroy()
+        wakeLock.release()
         if (mBound) {
             unbindService(mServiceConnection)
             mService?.unsubscribeToLocationUpdates()
