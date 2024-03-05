@@ -15,18 +15,13 @@ import android.os.PowerManager.WakeLock
 import androidx.appcompat.app.AppCompatActivity
 import com.example.saferdriving.R
 import com.example.saferdriving.databinding.ActivityLiveDataDisplayBinding
-import com.example.saferdriving.BuildConfig
 import com.example.saferdriving.classes.ObdConnection
-import com.example.saferdriving.dataclasses.WeatherInfo
 import com.example.saferdriving.enums.Permissions.*
 import com.example.saferdriving.services.TimerService
 import com.example.saferdriving.services.LiveDataService
 import com.example.saferdriving.singletons.FirebaseManager
 import com.example.saferdriving.utils.getRequestPermission
 import com.example.saferdriving.utils.showConnectionTypeDialog
-import com.google.firebase.database.DatabaseReference
-import com.google.firebase.database.ktx.database
-import com.google.firebase.ktx.Firebase
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
@@ -192,7 +187,7 @@ class LiveDataActivity : AppCompatActivity() {
         firebaseManager.addWeatherInfo(queue, location)
     }
     private fun subscribeToService(){
-        mService?.subscribeToLocationUpdates(obdConnection, mediaPlayer!!, queue) { location ->
+        mService?.subscribeToLiveData(obdConnection, mediaPlayer!!, queue) { location ->
             updateLocation(location)
         }
     }
@@ -201,7 +196,7 @@ class LiveDataActivity : AppCompatActivity() {
         wakeLock.release()
         if (mBound) {
             unbindService(mServiceConnection)
-            mService?.unsubscribeToLocationUpdates()
+            mService?.unsubscribeToLiveData()
             resetTimer()
             mBound = false
         }

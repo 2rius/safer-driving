@@ -1,6 +1,5 @@
 package com.example.saferdriving.services
 
-import android.annotation.SuppressLint
 import android.app.Service
 import android.content.Intent
 import android.location.Location
@@ -8,6 +7,7 @@ import android.media.MediaPlayer
 import android.os.Binder
 import android.os.IBinder
 import android.os.Looper
+import android.util.Log
 import androidx.core.content.PermissionChecker
 import com.android.volley.RequestQueue
 import com.example.saferdriving.classes.ObdConnection
@@ -19,41 +19,48 @@ import com.example.saferdriving.singletons.FirebaseManager
 import com.example.saferdriving.utils.getRoad
 import com.github.eltonvs.obd.command.ObdResponse
 import com.google.android.gms.location.*
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import java.util.*
 
 
 class LiveDataService : Service(){
-    val firebaseManager = FirebaseManager.getInstance()
+    companion object {
+        const val TAG = "LiveDataService"
+    }
+
+    private val firebaseManager = FirebaseManager.getInstance()
+
+    private var isServiceActive = false
 
     //OBD data
-    var speed: ObdResponse? = null
+    private var speed: ObdResponse? = null
 
-    var time: Long? = null
-    var speedingSecondsList: MutableList<SpeedingRecording> = mutableListOf()
-    var roadList: MutableList<Road> = mutableListOf()
-    var obdConnection: ObdConnection? = null
-    var mediaPlayer: MediaPlayer? = null
-    var location: Location? = null
+    private var time: Long? = null
+    private var speedingSecondsList: MutableList<SpeedingRecording> = mutableListOf()
+    private var roadList: MutableList<Road> = mutableListOf()
+    private var obdConnection: ObdConnection? = null
+    private var mediaPlayer: MediaPlayer? = null
+    private var location: Location? = null
 
-    var currentRoad: Road? = null
+    private var currentRoad: Road? = null
     //Road
-    var queue: RequestQueue? = null
+    private var queue: RequestQueue? = null
 
-    var isSpeeding: Boolean = false
+    private var isSpeeding: Boolean = false
 
-    var topSpeed: Int = 0
-    var topSpeedCity: Int = 0
-    var topSpeedCountryRoad: Int = 0
-    var topSpeedHighway: Int = 0
+    private var topSpeed: Int = 0
+    private var topSpeedCity: Int = 0
+    private var topSpeedCountryRoad: Int = 0
+    private var topSpeedHighway: Int = 0
 
-    var topLocalSpeed: Int = 0
-    var localStartTime: Long? = null
-    var localLocation: Location? = null
-    var localRoad: Road? = null
+    private var topLocalSpeed: Int = 0
+    private var localStartTime: Long = 0
+    private var localLocation: Location? = null
+    private var localRoad: Road? = null
 
     private var startTime: Long = 0
 
@@ -99,79 +106,11 @@ class LiveDataService : Service(){
              *
              * @param locationResult The last known location.
              */
-            @SuppressLint("SimpleDateFormat")
             override fun onLocationResult(locationResult: LocationResult) {
+                Log.i(TAG, "New location result")
                 super.onLocationResult(locationResult)
                 locationResult.lastLocation?.let { location ->
                     this@LiveDataService.location = location
-                    if( queue != null) {
-                        getRoad(queue!!, location) { road ->
-                            roadList.add(road)
-                            currentRoad = road
-                        }
-                    }
-
-                    GlobalScope.launch(Dispatchers.IO) {
-                        if (speed != null && time != null) {
-                            val response = obdConnection?.getSpeedAndAcceleration(speed!!, time!!, 500)
-                            response?.let { speedAndAcceleration ->
-                                val timeOfResponse = (speedAndAcceleration.timeCaptured - startTime)
-                                firebaseManager.addObdRecording(timeOfResponse, speedAndAcceleration)
-
-                                speed = response.speed
-                                time = response.timeCaptured
-                                val speedVal = speed!!.value.toInt()
-
-                                if (currentRoad != null && currentRoad!!.speedLimit < speedVal) {
-                                    //sound
-                                    //speeding
-
-                                    if (speedVal > topLocalSpeed) topLocalSpeed = speedVal
-                                    if (!isSpeeding){
-                                        // If withSound is checked, play audio when the speeding starts
-                                        if(firebaseManager.getWithSound())
-                                            mediaPlayer?.start()
-
-                                        // Save info about when the speeding started
-                                        localStartTime = speedAndAcceleration.timeCaptured
-                                        localLocation = location
-                                        localRoad = currentRoad
-                                    }
-
-                                    isSpeeding = true
-
-                                } else if (currentRoad != null && isSpeeding){
-                                    val secondsSpeeding = (speedAndAcceleration.timeCaptured - localStartTime!!) / 1000
-                                    val timeOfSpeedingStart = localStartTime!! - startTime
-
-                                    val speedingRecording = firebaseManager.addSpeedingRecording(
-                                        timeOfSpeedingStart,
-                                        localLocation!!,
-                                        localRoad!!,
-                                        topSpeed,
-                                        secondsSpeeding.toInt()
-                                    )
-
-                                    isSpeeding = false
-                                    speedingSecondsList.add(speedingRecording)
-                                    topLocalSpeed = 0 // reset for next speed
-                                }
-
-                                if (speedVal > topSpeed) topSpeed = speedVal
-
-                                if (currentRoad != null){
-                                    when (currentRoad!!.type) {
-                                        RoadType.CITY ->
-                                            if (speedVal > topSpeedCity) topSpeedCity = speedVal
-                                        RoadType.RURAL ->
-                                            if (speedVal > topSpeedCountryRoad) topSpeedCountryRoad = speedVal
-                                        RoadType.MOTORWAY ->
-                                            if (speedVal > topSpeedHighway) topSpeedHighway = speedVal
-                                    }
-                                }
-                            }
-                        }
-                    }
                 }
             }
         }
@@ -181,7 +120,7 @@ class LiveDataService : Service(){
      * Subscribes this application to get the location changes via the `locationCallback()`.
      */
     @OptIn(DelicateCoroutinesApi::class)
-    fun subscribeToLocationUpdates(
+    fun subscribeToLiveData(
         obdConnection: ObdConnection,
         mediaPlayer: MediaPlayer,
         queue: RequestQueue,
@@ -195,9 +134,12 @@ class LiveDataService : Service(){
         )
             return
 
+        isServiceActive = true
+
         this.obdConnection = obdConnection
         this.mediaPlayer = mediaPlayer
         this.queue = queue
+
         GlobalScope.launch(Dispatchers.IO) {
             speed = obdConnection.getSpeed()
         }
@@ -206,7 +148,7 @@ class LiveDataService : Service(){
 
         // Sets the accuracy and desired interval for active location updates.
         val locationRequest = LocationRequest
-            .Builder(Priority.PRIORITY_HIGH_ACCURACY, 2000)
+            .Builder(Priority.PRIORITY_HIGH_ACCURACY, 200)
             .build()
 
         val locationResult = mFusedLocationClient.lastLocation
@@ -220,14 +162,38 @@ class LiveDataService : Service(){
         mFusedLocationClient.requestLocationUpdates(
             locationRequest, mLocationCallback, Looper.getMainLooper()
         )
+
+        // Start coroutine updating the road
+        CoroutineScope(Dispatchers.IO).launch {
+            while (isServiceActive) {
+                Log.i(TAG, "Road loop iteration")
+                if(location != null) {
+                    getRoad(queue, location!!) { road ->
+                        roadList.add(road)
+                        currentRoad = road
+                    }
+                }
+                // Delay for road API calls
+                delay(2000)
+            }
+        }
+
+        // Start Obd coroutine
+        CoroutineScope(Dispatchers.IO).launch {
+            while (isServiceActive) {
+                Log.i(TAG, "Obd loop iteration")
+                obdUpdates(1000)
+            }
+        }
     }
 
     /**
      * Unsubscribes this application of getting the location changes from  the `locationCallback()`.
      */
-    fun unsubscribeToLocationUpdates() {
+    fun unsubscribeToLiveData() {
         // Unsubscribe to location changes.
         mFusedLocationClient.removeLocationUpdates(mLocationCallback)
+        isServiceActive = false
 
         firebaseManager.addRideInfo(
             startTime,
@@ -237,5 +203,74 @@ class LiveDataService : Service(){
             topSpeedCity,
             speedingSecondsList
         )
+    }
+
+    private suspend fun obdUpdates(
+        delay: Long
+    ) {
+        if (speed != null && time != null) {
+            val response = obdConnection?.getSpeedAndAcceleration(speed!!, time!!, delay)
+            response?.let { speedAndAcceleration ->
+                val timeOfResponse = (speedAndAcceleration.timeCaptured - startTime)
+                firebaseManager.addObdRecording(timeOfResponse, speedAndAcceleration)
+
+                speed = response.speed
+                time = response.timeCaptured
+                val speedVal = speed!!.value.toInt()
+
+                if (currentRoad != null && currentRoad!!.speedLimit < speedVal) {
+                    // If speed increases while speeding, update topLocalSpeed
+                    if (speedVal > topLocalSpeed) topLocalSpeed = speedVal
+
+                    // If statement to check if it is a new speeding to be recorded
+                    if (!isSpeeding){
+                        // If withSound is checked, play audio when the speeding starts
+                        if(firebaseManager.getWithSound())
+                            mediaPlayer?.start()
+
+                        // Save info about when the speeding started
+                        localStartTime = speedAndAcceleration.timeCaptured
+                        localLocation = location
+                        localRoad = currentRoad
+                    }
+
+                    isSpeeding = true
+
+                } else if (currentRoad != null && isSpeeding){
+                    val secondsSpeeding = (speedAndAcceleration.timeCaptured - localStartTime) / 1000
+                    val timeOfSpeedingStart = localStartTime - startTime
+
+                    val speedingRecording = firebaseManager.addSpeedingRecording(
+                        timeOfSpeedingStart,
+                        localLocation!!,
+                        localRoad!!,
+                        topSpeed,
+                        secondsSpeeding.toInt()
+                    )
+
+                    isSpeeding = false
+                    speedingSecondsList.add(speedingRecording)
+
+                    // Reset local info for next speeding
+                    localStartTime = 0
+                    localLocation = null
+                    localRoad = null
+                    topLocalSpeed = 0 // reset for next speed
+                }
+
+                if (speedVal > topSpeed) topSpeed = speedVal
+
+                if (currentRoad != null){
+                    when (currentRoad!!.type) {
+                        RoadType.CITY ->
+                            if (speedVal > topSpeedCity) topSpeedCity = speedVal
+                        RoadType.RURAL ->
+                            if (speedVal > topSpeedCountryRoad) topSpeedCountryRoad = speedVal
+                        RoadType.MOTORWAY ->
+                            if (speedVal > topSpeedHighway) topSpeedHighway = speedVal
+                    }
+                }
+            }
+        }
     }
 }
