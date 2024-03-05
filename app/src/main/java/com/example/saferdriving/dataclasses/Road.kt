@@ -1,4 +1,4 @@
-package com.example.saferdriving.dataClasses
+package com.example.saferdriving.dataclasses
 
 import com.example.saferdriving.enums.RoadType
 

@@ -4,7 +4,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".activities.RegisterDriver">
+    tools:context=".activities.RegisterDriverActivity">
 
     <!-- EditText for Age -->
     <EditText
@@ -12,6 +12,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:hint="Age"
+        android:inputType="number"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintBottom_toTopOf="@+id/editTextDrivingExperience"
         app:layout_constraintStart_toStartOf="parent"
@@ -23,6 +24,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:hint="Driving Experience"
+        android:inputType="number"
         app:layout_constraintTop_toBottomOf="@+id/editTextAge"
         app:layout_constraintBottom_toTopOf="@+id/editTextResidence"
         app:layout_constraintStart_toStartOf="parent"
@@ -46,17 +48,16 @@
         android:layout_height="wrap_content"
         android:hint="Job"
         app:layout_constraintTop_toBottomOf="@+id/editTextResidence"
-        app:layout_constraintBottom_toTopOf="@+id/register_new_ride"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent" />
 
-    <!-- Button to register new ride -->
-    <Button
-        android:id="@+id/register_new_ride"
+    <!-- Checkbox for Sound -->
+    <CheckBox
+        android:id="@+id/checkboxSound"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="@string/register_new_ride"
-        app:layout_constraintTop_toBottomOf="@id/editTextJob"
+        android:text="Enable Sound"
+        app:layout_constraintTop_toBottomOf="@+id/editTextJob"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent" />
 
@@ -65,7 +66,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="@string/go_to_record"
-        app:layout_constraintTop_toBottomOf="@id/register_new_ride"
+        app:layout_constraintTop_toBottomOf="@id/checkboxSound"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent" />
 

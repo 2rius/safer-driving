@@ -1,8 +1,9 @@
 package com.example.saferdriving.classes
 
 import android.content.Context
-import com.example.saferdriving.dataClasses.Acceleration
-import com.example.saferdriving.dataClasses.SpeedAndAcceleration
+import com.example.saferdriving.dataclasses.Acceleration
+import com.example.saferdriving.dataclasses.SpeedAndAcceleration
+import com.example.saferdriving.utils.SpeedCommand
 import com.github.eltonvs.obd.command.ObdCommand
 import com.github.eltonvs.obd.command.ObdResponse
 import com.github.eltonvs.obd.connection.ObdDeviceConnection

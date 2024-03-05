@@ -2,8 +2,6 @@ package com.example.saferdriving.services
 import android.app.Service
 import android.content.Intent
 import android.os.IBinder
-import android.util.Log
-import com.example.saferdriving.services.Geolocation.Companion.TAG
 import java.util.*
 
 class TimerService : Service()
@@ -16,7 +14,6 @@ class TimerService : Service()
     {
 
         val time = intent.getDoubleExtra(TIME_EXTRA, 0.0)
-        Log.d(TAG, "Time value received by Timer service: $time") // Add this line
         timer.scheduleAtFixedRate(TimeTask(time), 0, 1000)
         return START_NOT_STICKY
     }
@@ -24,7 +21,7 @@ class TimerService : Service()
 
     override fun onDestroy()
     {
-        timer?.cancel()
+        timer.cancel()
         super.onDestroy()
     }
 
@@ -36,7 +33,6 @@ class TimerService : Service()
             time++
             intent.putExtra(TIME_EXTRA, time)
             sendBroadcast(intent)
-            Log.d(TAG, "Is time increamented? $time")
         }
     }
 
