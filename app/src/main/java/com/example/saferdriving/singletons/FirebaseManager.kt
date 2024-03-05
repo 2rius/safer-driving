@@ -58,7 +58,7 @@ class FirebaseManager private constructor() {
         this.withSound = withSound
     }
 
-    fun getWithSound() : Boolean{
+    fun getWithSound(): Boolean{
         return withSound
     }
 
