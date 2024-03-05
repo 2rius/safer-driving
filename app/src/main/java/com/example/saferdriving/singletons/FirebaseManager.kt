@@ -20,6 +20,9 @@ import java.util.Locale
 
 class FirebaseManager private constructor() {
     companion object {
+        const val DB_URL = "https://safer-driving-default-rtdb.europe-west1.firebasedatabase.app/"
+        const val DEFAULT_DRIVERID = "Unknown"
+
         @Volatile
         private var instance: FirebaseManager? = null
 
@@ -28,11 +31,10 @@ class FirebaseManager private constructor() {
                 instance ?: FirebaseManager().also { instance = it }
             }
     }
-    private val dbUrl = "https://safer-driving-default-rtdb.europe-west1.firebasedatabase.app/"
 
-    private val db = Firebase.database(dbUrl).reference
+    private val db = Firebase.database(DB_URL).reference
 
-    private var driverId = "Unknown"
+    private var driverId = DEFAULT_DRIVERID
     private var withSound = false
 
     private fun getWithSoundString(): String {
@@ -48,7 +50,7 @@ class FirebaseManager private constructor() {
     }
 
     fun addDriver() {
-        if (driverId == "Unknown")
+        if (driverId == DEFAULT_DRIVERID)
             driverId = db.child(getWithSoundString()).child("drivers").push().key ?: "Unknown"
     }
 
@@ -71,7 +73,7 @@ class FirebaseManager private constructor() {
         )
 
         val time = SimpleDateFormat("mm:ss", Locale.ENGLISH).format(Date(timeOfRecording))
-        getFirebaseReference().child("obd").child(time).setValue(obdRecording)
+        getFirebaseReference().child("recordings").child("obd").child(time).setValue(obdRecording)
 
         return obdRecording
     }
@@ -93,7 +95,7 @@ class FirebaseManager private constructor() {
         )
 
         val time = SimpleDateFormat("mm:ss", Locale.ENGLISH).format(Date(timeOfRecording))
-        getFirebaseReference().child("obd").child(time).setValue(speedingRecording)
+        getFirebaseReference().child("recordings").child("speedings").child(time).setValue(speedingRecording)
 
         return speedingRecording
     }
@@ -119,7 +121,7 @@ class FirebaseManager private constructor() {
         location: Location
     ) {
         getWeatherInfo(requestQueue, location) { weatherInfo ->
-            getFirebaseReference().child("weather-info").setValue(weatherInfo)
+            getFirebaseReference().child("weather_info").setValue(weatherInfo)
         }
     }
 
@@ -170,6 +172,6 @@ class FirebaseManager private constructor() {
             averageSecondsSpeedingInCity = averageSecondsSpeedingInCity
         )
 
-        getFirebaseReference().child("ride-info").setValue(rideInfo)
+        getFirebaseReference().child("ride_info").setValue(rideInfo)
     }
 }
