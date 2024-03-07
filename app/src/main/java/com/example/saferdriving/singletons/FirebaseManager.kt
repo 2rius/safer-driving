@@ -50,8 +50,7 @@ class FirebaseManager private constructor() {
     }
 
     fun addDriver() {
-        if (driverId == DEFAULT_DRIVERID)
-            driverId = db.child(getWithSoundString()).child("drivers").push().key ?: "Unknown"
+        driverId = db.child(getWithSoundString()).child("drivers").push().key ?: "Unknown"
     }
 
     fun setWithSound(withSound: Boolean) {
