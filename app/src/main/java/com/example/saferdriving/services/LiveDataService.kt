@@ -18,6 +18,7 @@ import com.example.saferdriving.enums.Permissions
 import com.example.saferdriving.enums.RoadType
 import com.example.saferdriving.singletons.FirebaseManager
 import com.example.saferdriving.utils.getRoad
+import com.github.eltonvs.obd.command.NonNumericResponseException
 import com.github.eltonvs.obd.command.ObdResponse
 import com.google.android.gms.location.*
 import kotlinx.coroutines.CoroutineScope
@@ -214,49 +215,55 @@ class LiveDataService : Service(){
         delay: Long
     ) {
         if (speed != null && time != null) {
-            val response = obdConnection?.getSpeedAndAcceleration(speed!!, time!!, delay)
-            response?.let { speedAndAcceleration ->
-                val timeOfResponse = (speedAndAcceleration.timeCaptured - startTime)
-                firebaseManager.addObdRecording(timeOfResponse, speedAndAcceleration)
+            try {
+                val response = obdConnection?.getSpeedAndAcceleration(speed!!, time!!, delay)
+                response?.let { speedAndAcceleration ->
+                    val timeOfResponse = (speedAndAcceleration.timeCaptured - startTime)
+                    firebaseManager.addObdRecording(timeOfResponse, speedAndAcceleration)
 
-                speed = response.speed
-                time = response.timeCaptured
-                val speedVal = speed!!.value.toInt()
+                    speed = response.speed
+                    time = response.timeCaptured
+                    val speedVal = speed!!.value.toInt()
 
-                if (currentRoad != null && currentRoad!!.speedLimit < speedVal) {
-                    // If speed increases while speeding, update topLocalSpeed
-                    if (speedVal > topLocalSpeed) topLocalSpeed = speedVal
+                    if (currentRoad != null && currentRoad!!.speedLimit < speedVal) {
+                        // If speed increases while speeding, update topLocalSpeed
+                        if (speedVal > topLocalSpeed) topLocalSpeed = speedVal
 
-                    // If statement to check if it is a new speeding to be recorded
-                    if (!isSpeeding){
-                        // If withSound is checked, play audio when the speeding starts
-                        if(firebaseManager.getWithSound())
-                            mediaPlayer?.start()
+                        // If statement to check if it is a new speeding to be recorded
+                        if (!isSpeeding) {
+                            // If withSound is checked, play audio when the speeding starts
+                            if (firebaseManager.getWithSound())
+                                mediaPlayer?.start()
 
-                        // Save info about when the speeding started
-                        localStartTime = speedAndAcceleration.timeCaptured
-                        localLocation = location
-                        localRoad = currentRoad
+                            // Save info about when the speeding started
+                            localStartTime = speedAndAcceleration.timeCaptured
+                            localLocation = location
+                            localRoad = currentRoad
+                        }
+
+                        isSpeeding = true
+
+                    } else if (currentRoad != null && isSpeeding) {
+                        recordSpeeding(speedAndAcceleration.timeCaptured)
                     }
 
-                    isSpeeding = true
+                    if (speedVal > topSpeed) topSpeed = speedVal
 
-                } else if (currentRoad != null && isSpeeding){
-                    recordSpeeding(speedAndAcceleration.timeCaptured)
-                }
+                    if (currentRoad != null) {
+                        when (currentRoad!!.type) {
+                            RoadType.CITY ->
+                                if (speedVal > topSpeedCity) topSpeedCity = speedVal
 
-                if (speedVal > topSpeed) topSpeed = speedVal
+                            RoadType.RURAL ->
+                                if (speedVal > topSpeedCountryRoad) topSpeedCountryRoad = speedVal
 
-                if (currentRoad != null){
-                    when (currentRoad!!.type) {
-                        RoadType.CITY ->
-                            if (speedVal > topSpeedCity) topSpeedCity = speedVal
-                        RoadType.RURAL ->
-                            if (speedVal > topSpeedCountryRoad) topSpeedCountryRoad = speedVal
-                        RoadType.MOTORWAY ->
-                            if (speedVal > topSpeedHighway) topSpeedHighway = speedVal
+                            RoadType.MOTORWAY ->
+                                if (speedVal > topSpeedHighway) topSpeedHighway = speedVal
+                        }
                     }
                 }
+            } catch (e: NonNumericResponseException) {
+                
             }
         }
     }
