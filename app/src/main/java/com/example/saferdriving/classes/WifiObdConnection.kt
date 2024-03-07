@@ -5,6 +5,7 @@ import com.github.eltonvs.obd.connection.ObdDeviceConnection
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.io.IOException
+import java.net.InetSocketAddress
 import java.net.Socket
 
 /**
@@ -27,7 +28,8 @@ class WifiObdConnection(private val ip: String = "10.0.0.35", private val port: 
         context: Context
     ) {
         withContext(Dispatchers.IO) {
-            val wifiSocket = Socket(ip, port)
+            val wifiSocket = Socket()
+            wifiSocket.connect(InetSocketAddress(ip,port), 5000)
 
             val inputStream = wifiSocket.getInputStream()
             val outputStream = wifiSocket.getOutputStream()
