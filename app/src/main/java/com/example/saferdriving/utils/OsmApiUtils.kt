@@ -107,10 +107,8 @@ private fun getUrl(location: Location): String {
  */
 private fun getRoadType(tags: JSONObject): RoadType? {
     return when {
-        tags.has("has sidewalk") -> RoadType.CITY
         tags.has("living_street") && tags.getString("living_street") == "yes" -> RoadType.CITY
         tags.has("cyclestreet") && tags.getString("cyclestreet") == "yes" -> RoadType.CITY
-        tags.has("lit") && tags.getString("lit") == "yes" -> RoadType.CITY
         tags.has("highway") && (tags.getString("highway") == "living_street"
                         || tags.getString("highway") == "residential" ) -> RoadType.CITY
 
@@ -119,8 +117,6 @@ private fun getRoadType(tags: JSONObject): RoadType? {
 
         tags.has("has no sidewalk") -> RoadType.RURAL
         tags.has("motorroad") && tags.getString("motorroad") == "yes" -> RoadType.RURAL
-        tags.has("lit") && tags.getString("lit") == "no" -> RoadType.RURAL
-
         else -> null
     }
 }
