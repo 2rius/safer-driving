@@ -13,7 +13,6 @@
         android:padding="10dp"
         android:text="00:00:00"
         android:textAlignment="center"
-        android:textColor="@color/black"
         android:textSize="60sp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintTop_toTopOf="parent"
@@ -37,6 +36,19 @@
         app:layout_constraintTop_toBottomOf="@id/timeTV"
         app:layout_constraintStart_toEndOf="@id/startStopButton"
         app:layout_constraintEnd_toEndOf="parent" />
+
+    <TextView
+        android:id="@+id/error_text"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:padding="10dp"
+        android:text="@string/error"
+        android:textAlignment="center"
+        android:textSize="11sp"
+        android:visibility="invisible"
+        app:layout_constraintBottom_toTopOf="@id/start_sound"
+        tools:ignore="MissingConstraints"
+        tools:layout_editor_absoluteX="0dp" />
 
 
     <Button

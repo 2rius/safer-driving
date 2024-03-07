@@ -1,12 +1,15 @@
 package com.example.saferdriving.services
 
 import android.app.Service
+import android.content.Context
 import android.content.Intent
 import android.location.Location
 import android.media.MediaPlayer
 import android.os.Binder
 import android.os.IBinder
 import android.os.Looper
+import android.os.PowerManager
+import android.os.PowerManager.WakeLock
 import android.util.Log
 import androidx.core.content.PermissionChecker
 import com.android.volley.RequestQueue
@@ -66,6 +69,8 @@ class LiveDataService : Service(){
 
     private var startTime: Long = 0
 
+    private lateinit var wakeLock: WakeLock
+
     //Geolocation service
     /**
      * Provides access to the Fused Location Provider API.
@@ -82,6 +87,10 @@ class LiveDataService : Service(){
         // and binds with this service. The service should cease to be a foreground service
         // when that happens.
         startLocationAware()
+
+        val mgr = getSystemService(Context.POWER_SERVICE) as PowerManager
+        wakeLock = mgr.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "SaferDriving:LiveData")
+        wakeLock.acquire(20 * 60 * 1000L /*20 minutes*/)
         return LocalBinder()
     }
 
@@ -93,7 +102,6 @@ class LiveDataService : Service(){
      * Start the location-aware instance and defines the callback to be called when the GPS sensor
      * provides a new user's location.
      */
-    @OptIn(DelicateCoroutinesApi::class)
     private fun startLocationAware() {
         // Show a dialog to ask the user to allow the application to access the device's location.
         // Start receiving location updates.
@@ -126,15 +134,19 @@ class LiveDataService : Service(){
         obdConnection: ObdConnection,
         mediaPlayer: MediaPlayer,
         queue: RequestQueue,
-        initFunc: (Location) -> Unit
+        initFunc: (Location) -> Unit,
+        errorFunc: (String) -> Unit
     )  {
         // Check if the user allows the application to access the location-aware resources.
         if (
             !Permissions.LOCATION.permissions.all { permission ->
                 PermissionChecker.checkSelfPermission(this, permission) == PermissionChecker.PERMISSION_GRANTED
             }
-        )
+        ) {
+            errorFunc("Location permissions not granted correctly")
             return
+        }
+
 
         isServiceActive = true
 
@@ -184,7 +196,9 @@ class LiveDataService : Service(){
         CoroutineScope(Dispatchers.IO).launch {
             while (isServiceActive) {
                 Log.i(TAG, "Obd loop iteration")
-                obdUpdates(1000)
+                obdUpdates()
+                // Delay for OBD calls
+                delay(1000)
             }
         }
     }
@@ -212,7 +226,7 @@ class LiveDataService : Service(){
     }
 
     private suspend fun obdUpdates(
-        delay: Long
+        delay: Long = 0
     ) {
         if (speed != null && time != null) {
             try {

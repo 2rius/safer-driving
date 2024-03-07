@@ -12,6 +12,7 @@ import android.content.IntentFilter
 import android.location.Location
 import android.os.PowerManager
 import android.os.PowerManager.WakeLock
+import android.view.View
 import androidx.appcompat.app.AppCompatActivity
 import com.example.saferdriving.R
 import com.example.saferdriving.databinding.ActivityLiveDataDisplayBinding
@@ -32,8 +33,6 @@ class LiveDataActivity : AppCompatActivity() {
     private lateinit var binding: ActivityLiveDataDisplayBinding
 
     private val firebaseManager = FirebaseManager.getInstance()
-
-    private lateinit var wakeLock: WakeLock
 
     private var mService: LiveDataService? = null
     // Tracks the bound state of the service.
@@ -61,8 +60,6 @@ class LiveDataActivity : AppCompatActivity() {
         if (savedInstanceState == null) {
             queue = Volley.newRequestQueue(this)
 
-
-
             // Check which permissions is needed to ask to the user.
             val requestLocationPermission =
                 getRequestPermission(LOCATION.permissions, onGranted = { subscribeToService() })
@@ -70,10 +67,6 @@ class LiveDataActivity : AppCompatActivity() {
                 { onDenied -> getRequestPermission(BLUETOOTH.permissions, onDenied = onDenied) }
 
             val futureConnection = showConnectionTypeDialog(this, requestBluetoothPermission)
-
-            val mgr = getSystemService(Context.POWER_SERVICE) as PowerManager
-            wakeLock = mgr.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "SaferDriving:LiveData")
-            wakeLock.acquire(20 * 60 * 1000L /*20 minutes*/)
 
             // futureConnection.thenAccept will run concurrently, so code beneath this will run at the same time
             futureConnection.thenAccept { connection ->
@@ -85,9 +78,13 @@ class LiveDataActivity : AppCompatActivity() {
                         startLiveDataService()
 
                         serviceIntent = Intent(applicationContext, TimerService::class.java)
-                        startStopTimer()
+                        GlobalScope.launch(Dispatchers.Main) {
+                            startStopTimer()
+                        }
                     } catch (e: Exception) {
-                        // Handle error, usually problem with connecting to OBD device }
+                        GlobalScope.launch(Dispatchers.Main) {
+                            setErrorMessage(e.toString())
+                        }
                     }
                 }
             }
@@ -101,7 +98,6 @@ class LiveDataActivity : AppCompatActivity() {
         }
 
         binding.endRecording.setOnClickListener {
-            wakeLock.release()
             startMainActivity()
         }
 
@@ -193,9 +189,12 @@ class LiveDataActivity : AppCompatActivity() {
         firebaseManager.addWeatherInfo(queue, location)
     }
     private fun subscribeToService(){
-        mService?.subscribeToLiveData(obdConnection, mediaPlayer!!, queue) { location ->
-            updateLocation(location)
-        }
+        mService?.subscribeToLiveData(
+            obdConnection,
+            mediaPlayer!!,
+            queue,
+            initFunc = { location -> updateLocation(location) },
+            errorFunc = { message -> error(message) })
     }
     override fun onDestroy() {
         super.onDestroy()
@@ -214,5 +213,10 @@ class LiveDataActivity : AppCompatActivity() {
         )
         startActivity(intent)
         finish()
+    }
+
+    private fun setErrorMessage(message: String) {
+        binding.errorText.visibility = View.VISIBLE
+        binding.errorText.text = getString(R.string.error, message)
     }
 }
