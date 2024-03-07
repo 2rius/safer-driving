@@ -12,7 +12,7 @@ import java.net.Socket
  *  * establishing a connection to an OBD-II device, retrieve data from it, and close the
  *  * connection when no longer needed.
  */
-class WifiObdConnection(private val ip: String = "192.168.56.1", private val port: Int = 35000) : ObdConnection() {
+class WifiObdConnection(private val ip: String = "10.0.0.35", private val port: Int = 35000) : ObdConnection() {
     /**
      * Establishes a WIFI connection with the OBD-II device.
      * It is executed asynchronously in IO dispatcher to avoid blocking the main thread.
