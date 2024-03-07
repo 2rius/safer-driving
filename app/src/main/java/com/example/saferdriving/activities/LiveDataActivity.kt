@@ -62,7 +62,7 @@ class LiveDataActivity : AppCompatActivity() {
 
             // Check which permissions is needed to ask to the user.
             val requestLocationPermission =
-                getRequestPermission(LOCATION.permisions, onGranted = { subscribeToService() })
+                getRequestPermission(LOCATION.permissions, onGranted = { subscribeToService() })
             val requestBluetoothPermission: (() -> Unit) -> () -> Unit =
                 { onDenied -> getRequestPermission(BLUETOOTH.permissions, onDenied = onDenied) }
 
