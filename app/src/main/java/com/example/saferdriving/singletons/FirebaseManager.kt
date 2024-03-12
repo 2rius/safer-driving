@@ -29,7 +29,6 @@ class FirebaseManager private constructor() {
     private var withSound = false
     private var basicInfo = BasicInfo()
     private var weatherInfo = WeatherInfo()
-    private var traffic = TrafficInfo()
 
     private fun getFirebaseReferenceObd(): DatabaseReference {
         return db.child("obd").child(driverId)
@@ -105,16 +104,36 @@ class FirebaseManager private constructor() {
         timeOfRecording: Long,
         location: Location,
         road: Road,
+        trafficInfo: TrafficInfo,
         topSpeed: Int,
         secondsSpeeding: Int
     ): SpeedingRecording {
         val speedingRecording = SpeedingRecording(
+            basicInfo.age,
+            basicInfo.drivingExperience,
+            basicInfo.residence,
+            basicInfo.job,
+
+            weatherInfo.airPressure,
+            weatherInfo.airTemperature,
+            weatherInfo.windSpeed,
+            weatherInfo.weatherDescription,
+
+            trafficInfo.frc,
+            trafficInfo.currentTrafficSpeed,
+            trafficInfo.freeTrafficFlowSpeed,
+            trafficInfo.currentTrafficSpeed,
+            trafficInfo.freeTrafficFlowTravelTime,
+            trafficInfo.trafficConfidence,
+            trafficInfo.trafficRoadClosure,
+
             location.latitude,
             location.longitude,
             road.name,
             topSpeed,
             road.type,
-            secondsSpeeding
+            secondsSpeeding,
+            road.speedLimit
         )
 
         getFirebaseReferenceSpeedings().child(timeOfRecording.toString()).setValue(speedingRecording)
@@ -173,6 +192,11 @@ class FirebaseManager private constructor() {
             basicInfo.drivingExperience,
             basicInfo.residence,
             basicInfo.job,
+
+            weatherInfo.airPressure,
+            weatherInfo.airTemperature,
+            weatherInfo.windSpeed,
+            weatherInfo.weatherDescription,
 
             amountOfMinutesDriving = ((System.currentTimeMillis() - startTime) / 60000).toInt(),
             averageFuelConsumption = 0,

@@ -95,6 +95,7 @@ class LiveDataService : Service() {
     private var localStartTime: Long = 0
     private var localLocation: Location? = null
     private var localRoad: Road? = null
+    private var localTraffic: TrafficInfo? = null
 
     private var currentTrafficInfo: TrafficInfo? = null
 
@@ -319,6 +320,7 @@ class LiveDataService : Service() {
                             localStartTime = speedAndAcceleration.timeCaptured
                             localLocation = location
                             localRoad = currentRoad
+                            localTraffic = currentTrafficInfo
                         }
 
                         isSpeeding = true
@@ -359,8 +361,9 @@ class LiveDataService : Service() {
             localStartTime,
             localLocation!!,
             localRoad!!,
+            localTraffic!!,
             topSpeed,
-            secondsSpeeding.toInt()
+            secondsSpeeding.toInt(),
         )
 
         speedingSecondsList.add(speedingRecording)
