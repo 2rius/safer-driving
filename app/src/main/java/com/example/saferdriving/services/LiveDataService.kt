@@ -1,13 +1,10 @@
 package com.example.saferdriving.services
 
-import android.app.ForegroundServiceStartNotAllowedException
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.Service
-import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
-import android.content.pm.ServiceInfo
 import android.media.MediaPlayer
 import android.os.Build
 import android.os.IBinder
@@ -16,7 +13,6 @@ import android.os.PowerManager
 import android.os.PowerManager.WakeLock
 import android.util.Log
 import androidx.core.app.NotificationCompat
-import androidx.core.app.ServiceCompat
 import androidx.core.content.PermissionChecker
 import com.android.volley.RequestQueue
 import com.android.volley.toolbox.Volley
@@ -137,6 +133,7 @@ class LiveDataService : Service() {
         } else {
             when (obdAddress) {
                 null -> BluetoothObdConnection()
+                "" -> BluetoothObdConnection()
                 else -> BluetoothObdConnection(obdAddress)
             }
         }

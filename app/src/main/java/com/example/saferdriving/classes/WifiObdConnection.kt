@@ -1,6 +1,8 @@
 package com.example.saferdriving.classes
 
 import android.content.Context
+import com.example.saferdriving.utils.WifiSpeedCommand
+import com.github.eltonvs.obd.command.ObdResponse
 import com.github.eltonvs.obd.connection.ObdDeviceConnection
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -42,5 +44,11 @@ class WifiObdConnection(private val ip: String = "10.0.0.35", private val port: 
                 throw IOException("Input or output stream is null")
             }
         }
+    }
+
+    override suspend fun getSpeed(
+        delayTime: Long
+    ): ObdResponse {
+        return run(WifiSpeedCommand(), delayTime = delayTime)
     }
 }
