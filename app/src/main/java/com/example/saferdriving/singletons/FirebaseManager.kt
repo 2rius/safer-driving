@@ -9,6 +9,7 @@ import com.example.saferdriving.dataclasses.Road
 import com.example.saferdriving.dataclasses.SpeedAndAcceleration
 import com.example.saferdriving.dataclasses.SpeedingRecording
 import com.example.saferdriving.enums.RoadType
+import com.example.saferdriving.utils.getTrafficInfo
 import com.example.saferdriving.utils.getWeatherInfo
 import com.google.firebase.Firebase
 import com.google.firebase.database.DatabaseReference
@@ -122,6 +123,16 @@ class FirebaseManager private constructor() {
         getWeatherInfo(requestQueue, location) { weatherInfo ->
             getFirebaseReference().child("weather_info").setValue(weatherInfo)
         }
+    }
+
+    fun addTrafficInfo(
+        requestQueue: RequestQueue,
+        location: Location
+    ){
+        getTrafficInfo(requestQueue,location){ trafficInfo ->
+            getFirebaseReference().child("traffic_info").setValue(trafficInfo)
+        }
+
     }
 
     fun addRideInfo(

@@ -187,6 +187,7 @@ class LiveDataActivity : AppCompatActivity() {
     private fun updateLocation(location: Location)  {
         startingLocation = location
         firebaseManager.addWeatherInfo(queue, location)
+        firebaseManager.addTrafficInfo(queue, location)
     }
     private fun subscribeToService(){
         mService?.subscribeToLiveData(
