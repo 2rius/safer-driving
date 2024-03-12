@@ -1,6 +1,11 @@
 package com.example.saferdriving.dataclasses
 
 data class RideInfo(
+    var age: Int? = null,
+    var drivingExperience: Int? = null,
+    var residence: String? = null,
+    var job: String? = null,
+
     var amountOfMinutesDriving: Int? = null,
     var averageFuelConsumption: Int? = null,
 

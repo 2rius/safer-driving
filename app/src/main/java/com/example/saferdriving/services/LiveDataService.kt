@@ -23,10 +23,12 @@ import com.example.saferdriving.classes.WifiObdConnection
 import com.example.saferdriving.dataclasses.Location
 import com.example.saferdriving.dataclasses.Road
 import com.example.saferdriving.dataclasses.SpeedingRecording
+import com.example.saferdriving.dataclasses.TrafficInfo
 import com.example.saferdriving.enums.Permissions
 import com.example.saferdriving.enums.RoadType
 import com.example.saferdriving.singletons.FirebaseManager
 import com.example.saferdriving.utils.getRoad
+import com.example.saferdriving.utils.getTrafficInfo
 import com.github.eltonvs.obd.command.NonNumericResponseException
 import com.github.eltonvs.obd.command.ObdResponse
 import com.google.android.gms.location.FusedLocationProviderClient
@@ -93,6 +95,8 @@ class LiveDataService : Service() {
     private var localStartTime: Long = 0
     private var localLocation: Location? = null
     private var localRoad: Road? = null
+
+    private var currentTrafficInfo: TrafficInfo? = null
 
     override fun onBind(p0: Intent?): IBinder? = null
 
@@ -228,8 +232,7 @@ class LiveDataService : Service() {
     }
 
     private fun addWeather(location: Location) {
-        firebaseManager.addWeatherInfo(queue, location)
-        firebaseManager.addTrafficInfo(queue, location)
+        firebaseManager.setWeatherInfo(queue, location)
     }
 
     private fun startLoops() {
@@ -242,9 +245,12 @@ class LiveDataService : Service() {
                         roadList.add(road)
                         currentRoad = road
                     }
+                    getTrafficInfo(queue, location!!) { trafficInfo ->
+                        currentTrafficInfo = trafficInfo
+                    }
                 }
                 // Delay for road API calls
-                delay(2000)
+                delay(1000)
             }
         }
 
@@ -292,8 +298,8 @@ class LiveDataService : Service() {
             try {
                 val response = obdConnection.getSpeedAndAcceleration(speed!!, time!!, delay)
                 response.let { speedAndAcceleration ->
-                    val timeOfResponse = (speedAndAcceleration.timeCaptured - startTime)
-                    firebaseManager.addObdRecording(timeOfResponse, speedAndAcceleration)
+                    if (currentRoad!= null && currentTrafficInfo != null && location != null)
+                        firebaseManager.addObdRecording(speedAndAcceleration.timeCaptured, speedAndAcceleration, currentTrafficInfo!!, currentRoad!!, location!!)
 
                     speed = response.speed
                     time = response.timeCaptured
@@ -348,10 +354,9 @@ class LiveDataService : Service() {
         isSpeeding = false
 
         val secondsSpeeding = (endTime - localStartTime) / 1000
-        val timeOfSpeedingStart = localStartTime - startTime
 
         val speedingRecording = firebaseManager.addSpeedingRecording(
-            timeOfSpeedingStart,
+            localStartTime,
             localLocation!!,
             localRoad!!,
             topSpeed,

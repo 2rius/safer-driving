@@ -33,7 +33,7 @@ class RegisterDriverActivity : AppCompatActivity() {
                     firebaseManager.addDriver()
                     firebaseManager.setWithSound(checkboxSound.isChecked)
 
-                    firebaseManager.addBasicInfo(
+                    firebaseManager.setBasicInfo(
                         age,
                         drivingExperience,
                         residence,
