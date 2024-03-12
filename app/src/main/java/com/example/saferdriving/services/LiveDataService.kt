@@ -201,6 +201,7 @@ class LiveDataService : Service() {
 
     private fun addWeather(location: Location) {
         firebaseManager.addWeatherInfo(queue, location)
+        firebaseManager.addTrafficInfo(queue, location)
     }
 
     private fun startLoops() {
