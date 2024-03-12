@@ -1,14 +1,13 @@
 package com.example.saferdriving.utils
 
-import android.location.Location
 import android.util.Log
 import com.android.volley.Request
 import com.android.volley.RequestQueue
 import com.android.volley.toolbox.StringRequest
 import com.example.saferdriving.BuildConfig
+import com.example.saferdriving.dataclasses.Location
 import com.example.saferdriving.dataclasses.WeatherInfo
 import org.json.JSONObject
-import java.net.URLEncoder
 
 /**
  * Base URL for the Weatherbit API that should be extended with a given query.

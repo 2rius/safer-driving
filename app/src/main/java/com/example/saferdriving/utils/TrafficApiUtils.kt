@@ -1,11 +1,11 @@
 package com.example.saferdriving.utils
 
-import android.location.Location
 import android.util.Log
 import com.android.volley.Request
 import com.android.volley.RequestQueue
 import com.android.volley.toolbox.StringRequest
 import com.example.saferdriving.BuildConfig
+import com.example.saferdriving.dataclasses.Location
 import com.example.saferdriving.dataclasses.TrafficInfo
 import org.json.JSONObject
 

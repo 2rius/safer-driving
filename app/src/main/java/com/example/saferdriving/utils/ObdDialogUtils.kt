@@ -8,9 +8,7 @@ import android.widget.EditText
 import android.widget.RadioButton
 import android.widget.RadioGroup
 import com.example.saferdriving.R
-import com.example.saferdriving.classes.BluetoothObdConnection
-import com.example.saferdriving.classes.ObdConnection
-import com.example.saferdriving.classes.WifiObdConnection
+import com.example.saferdriving.dataclasses.ObdConnectionInfo
 import java.util.concurrent.CompletableFuture
 
 /**
@@ -19,14 +17,13 @@ import java.util.concurrent.CompletableFuture
  * @param context The context in which the dialog should be displayed.
  * @param getRequestBluetooth A function that requests permissions. Takes a callback function to
  * execute if permission is denied.
- * @return A CompletableFuture that will be completed with the selected ObdConnection (either
- * [WifiObdConnection] or [BluetoothObdConnection].
+ * @return A CompletableFuture that will be completed with [ObdConnectionInfo].
  */
 fun showConnectionTypeDialog(
     context: Context,
     getRequestBluetooth: (onDenied: () -> Unit) -> () -> Unit
-): CompletableFuture<ObdConnection> {
-    val future = CompletableFuture<ObdConnection>()
+): CompletableFuture<ObdConnectionInfo> {
+    val future = CompletableFuture<ObdConnectionInfo>()
 
     val dialog = createConnectionTypeDialog(context, getRequestBluetooth, future)
     dialog.setCancelable(false)
@@ -47,7 +44,7 @@ fun showConnectionTypeDialog(
 private fun createConnectionTypeDialog(
     context: Context,
     getRequestBluetooth: (onDenied: () -> Unit) -> () -> Unit,
-    future: CompletableFuture<ObdConnection>
+    future: CompletableFuture<ObdConnectionInfo>
 ): AlertDialog {
     val builder = AlertDialog.Builder(context)
     builder.setTitle(context.getString(R.string.connection_type_dialog_title))
@@ -89,7 +86,7 @@ private fun createConnectionTypeDialog(
  */
 private fun processUserInput(
     dialogView: View,
-    future: CompletableFuture<ObdConnection>
+    future: CompletableFuture<ObdConnectionInfo>
 ) {
     val radioGroup: RadioGroup = dialogView.findViewById(R.id.radioGroup)
     val ipEditText: EditText = dialogView.findViewById(R.id.ipEditText)
@@ -105,19 +102,18 @@ private fun processUserInput(
         val portString = portEditText.text.toString()
         val port = if (portString.isNotEmpty()) portString.toInt() else -1
 
-        val selectedConnection = when (selectedRadioButtonId) {
-            bluetoothRadioButton.id -> {
-                if (ip.isEmpty()) BluetoothObdConnection() else BluetoothObdConnection(ip)
-            }
-            wifiRadioButton.id -> when {
-                ip.isEmpty() && port == -1 -> WifiObdConnection()
-                port == -1 -> WifiObdConnection(ip)
-                ip.isEmpty() -> WifiObdConnection(port = port)
-                else -> WifiObdConnection(ip, port)
-            }
-            else -> null
+        val isWifi = when (selectedRadioButtonId) {
+            bluetoothRadioButton.id -> false
+            wifiRadioButton.id -> true
+            else -> false
         }
 
-        future.complete(selectedConnection)
+        val obdConnectionInfo = ObdConnectionInfo(
+            address = ip,
+            port = (if (port != -1) port else null),
+            isWifi = isWifi
+        )
+
+        future.complete(obdConnectionInfo)
     }
 }

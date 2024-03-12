@@ -1,9 +1,9 @@
 package com.example.saferdriving.utils
 
-import android.location.Location
 import com.android.volley.Request
 import com.android.volley.RequestQueue
 import com.android.volley.toolbox.StringRequest
+import com.example.saferdriving.dataclasses.Location
 import com.example.saferdriving.dataclasses.Road
 import com.example.saferdriving.enums.RoadType
 import org.json.JSONObject

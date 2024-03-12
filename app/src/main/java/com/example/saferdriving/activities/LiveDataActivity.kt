@@ -2,99 +2,43 @@ package com.example.saferdriving.activities
 
 import android.content.*
 
-import android.media.MediaPlayer
-import com.android.volley.RequestQueue
-import com.android.volley.toolbox.Volley
 import android.os.Bundle
-import android.os.IBinder
-import android.widget.Toast
 import android.content.IntentFilter
-import android.location.Location
-import android.os.PowerManager
-import android.os.PowerManager.WakeLock
 import android.view.View
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.content.PermissionChecker
 import com.example.saferdriving.R
 import com.example.saferdriving.databinding.ActivityLiveDataDisplayBinding
-import com.example.saferdriving.classes.ObdConnection
+import com.example.saferdriving.dataclasses.ObdConnectionInfo
+import com.example.saferdriving.enums.Permissions
 import com.example.saferdriving.enums.Permissions.*
-import com.example.saferdriving.services.TimerService
 import com.example.saferdriving.services.LiveDataService
-import com.example.saferdriving.singletons.FirebaseManager
+import com.example.saferdriving.services.TimerService
 import com.example.saferdriving.utils.getRequestPermission
 import com.example.saferdriving.utils.showConnectionTypeDialog
-import kotlinx.coroutines.DelicateCoroutinesApi
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.launch
 import kotlin.math.roundToInt
 
 class LiveDataActivity : AppCompatActivity() {
     private lateinit var binding: ActivityLiveDataDisplayBinding
 
-    private val firebaseManager = FirebaseManager.getInstance()
-
-    private var mService: LiveDataService? = null
-    // Tracks the bound state of the service.
-    private var mBound = false
-
-    private lateinit var queue: RequestQueue
-
-    private var startingLocation: Location? = null
-
-    //OBD
-    private lateinit var obdConnection : ObdConnection
-
-    //timer variables
+    // timer service variables
     private var timerStarted = false
-    private lateinit var serviceIntent: Intent
+    private lateinit var timerServiceIntent: Intent
     private var time = 0.0
 
-    private var mediaPlayer: MediaPlayer? = null
+    // livedata service variables
+    private lateinit var liveDataServiceIntent: Intent
 
-    @OptIn(DelicateCoroutinesApi::class)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityLiveDataDisplayBinding.inflate(layoutInflater)
         setContentView(binding.root)
+
+        timerServiceIntent = Intent(applicationContext, TimerService::class.java)
+        liveDataServiceIntent = Intent(this, LiveDataService::class.java)
+
         if (savedInstanceState == null) {
-            queue = Volley.newRequestQueue(this)
-
-            // Check which permissions is needed to ask to the user.
-            val requestLocationPermission =
-                getRequestPermission(LOCATION.permissions, onGranted = { subscribeToService() })
-            val requestBluetoothPermission: (() -> Unit) -> () -> Unit =
-                { onDenied -> getRequestPermission(BLUETOOTH.permissions, onDenied = onDenied) }
-
-            val futureConnection = showConnectionTypeDialog(this, requestBluetoothPermission)
-
-            // futureConnection.thenAccept will run concurrently, so code beneath this will run at the same time
-            futureConnection.thenAccept { connection ->
-                GlobalScope.launch(Dispatchers.IO) {
-                    try {
-                        connection.connect(this@LiveDataActivity)
-                        obdConnection = connection
-                        requestLocationPermission()
-                        startLiveDataService()
-
-                        serviceIntent = Intent(applicationContext, TimerService::class.java)
-                        GlobalScope.launch(Dispatchers.Main) {
-                            startStopTimer()
-                        }
-                    } catch (e: Exception) {
-                        GlobalScope.launch(Dispatchers.Main) {
-                            setErrorMessage(e.toString())
-                        }
-                    }
-                }
-            }
-        }
-
-        mediaPlayer = MediaPlayer.create(this, R.raw.sound)
-
-
-        binding.startSound.setOnClickListener {
-            playAudio()
+            setupLiveDataService()
         }
 
         binding.endRecording.setOnClickListener {
@@ -104,17 +48,16 @@ class LiveDataActivity : AppCompatActivity() {
         binding.resetButton.setOnClickListener { resetTimer() }
 
         binding.startStopButton.setOnClickListener { startStopTimer() }
+
         registerReceiver(updateTime, IntentFilter(TimerService.TIMER_UPDATED))
+        registerReceiver(livedataServiceError, IntentFilter(LiveDataService.ERROR_BROADCAST))
     }
 
-    private fun playAudio() {
-        if (!mediaPlayer?.isPlaying!!) {
-            mediaPlayer?.start()
-            Toast.makeText(this, "Sound started", Toast.LENGTH_SHORT).show()
-        } else {
-            Toast.makeText(this, "Audio is already playing", Toast.LENGTH_SHORT).show()
-        }
+    override fun onDestroy() {
+        super.onDestroy()
+        resetTimer()
     }
+
 
     private fun resetTimer()
     {
@@ -133,26 +76,17 @@ class LiveDataActivity : AppCompatActivity() {
 
     private fun startTimer()
     {
-        serviceIntent.putExtra(TimerService.TIME_EXTRA, time)
-        startService(serviceIntent)
+        timerServiceIntent.putExtra(TimerService.TIME_EXTRA, time)
+        startService(timerServiceIntent)
         binding.startStopButton.text = "Stop"
         timerStarted = true
     }
 
     private fun stopTimer()
     {
-        stopService(serviceIntent)
+        stopService(timerServiceIntent)
         binding.startStopButton.text = "Start"
         timerStarted = false
-    }
-
-    private val updateTime: BroadcastReceiver = object : BroadcastReceiver()
-    {
-        override fun onReceive(context: Context, intent: Intent)
-        {
-            time = intent.getDoubleExtra(TimerService.TIME_EXTRA, 0.0)
-            binding.timeTV.text = getTimeStringFromDouble(time)
-        }
     }
 
     private fun getTimeStringFromDouble(time: Double): String
@@ -167,47 +101,43 @@ class LiveDataActivity : AppCompatActivity() {
 
     private fun makeTimeString(hour: Int, min: Int, sec: Int): String = String.format("%02d:%02d:%02d", hour, min, sec)
 
-    private fun startLiveDataService(){
-        Intent(this, LiveDataService::class.java).also { intent ->
-            bindService(intent, mServiceConnection, Context.BIND_AUTO_CREATE)
+
+    private fun setupLiveDataService() {
+        getRequestPermission(LOCATION.permissions)()
+
+        val requestBluetoothPermission: (() -> Unit) -> () -> Unit =
+            { onDenied -> getRequestPermission(BLUETOOTH.permissions, onDenied = onDenied) }
+
+        val futureConnection = showConnectionTypeDialog(this, requestBluetoothPermission)
+
+        // futureConnection.thenAccept will run concurrently, so code beneath this will run at the same time
+        futureConnection.thenAccept { connectionInfo ->
+            if (
+                LOCATION.permissions.all { permission ->
+                    PermissionChecker.checkSelfPermission(this, permission) == PermissionChecker.PERMISSION_GRANTED
+                }
+            ) {
+                startLiveDataService(connectionInfo)
+                startStopTimer()
+            } else {
+                setErrorMessage("Location permissions not granted")
+            }
         }
     }
-    // Monitors the state of the connection to the service.
-    private val mServiceConnection: ServiceConnection = object : ServiceConnection {
-        override fun onServiceConnected(name: ComponentName, service: IBinder) {
-            val binder: LiveDataService.LocalBinder = service as LiveDataService.LocalBinder
-            mService = binder.getService()
-            mBound = true
+
+    private fun startLiveDataService(obdConnectionInfo: ObdConnectionInfo){
+        liveDataServiceIntent.apply {
+            putExtra("address", obdConnectionInfo.address)
+            putExtra("port", obdConnectionInfo.port)
+            putExtra("isWifi", obdConnectionInfo.isWifi)
         }
 
-        override fun onServiceDisconnected(name: ComponentName) {
-            mService = null
-        }
+        startService(liveDataServiceIntent)
     }
-    private fun updateLocation(location: Location)  {
-        startingLocation = location
-        firebaseManager.addWeatherInfo(queue, location)
-        firebaseManager.addTrafficInfo(queue, location)
-    }
-    private fun subscribeToService(){
-        mService?.subscribeToLiveData(
-            obdConnection,
-            mediaPlayer!!,
-            queue,
-            initFunc = { location -> updateLocation(location) },
-            errorFunc = { message -> error(message) })
-    }
-    override fun onDestroy() {
-        super.onDestroy()
-        if (mBound) {
-            unbindService(mServiceConnection)
-            mService?.unsubscribeToLiveData()
-            resetTimer()
-            mBound = false
-        }
-    }
+
 
     private fun startMainActivity() {
+        stopService(liveDataServiceIntent)
         val intent = Intent(
             this,
             MainActivity::class.java
@@ -219,5 +149,26 @@ class LiveDataActivity : AppCompatActivity() {
     private fun setErrorMessage(message: String) {
         binding.errorText.visibility = View.VISIBLE
         binding.errorText.text = getString(R.string.error, message)
+    }
+
+
+    private val updateTime: BroadcastReceiver = object : BroadcastReceiver()
+    {
+        override fun onReceive(context: Context, intent: Intent)
+        {
+            time = intent.getDoubleExtra(TimerService.TIME_EXTRA, 0.0)
+            binding.timeTV.text = getTimeStringFromDouble(time)
+        }
+    }
+
+    private val livedataServiceError: BroadcastReceiver = object : BroadcastReceiver()
+    {
+        override fun onReceive(context: Context, intent: Intent)
+        {
+            val errorMessage = intent.getStringExtra(LiveDataService.ERROR_EXTRA)
+            if (errorMessage != null) {
+                setErrorMessage(errorMessage)
+            }
+        }
     }
 }
