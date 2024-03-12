@@ -129,10 +129,9 @@ class FirebaseManager private constructor() {
         requestQueue: RequestQueue,
         location: Location
     ){
-        getTrafficInfo(requestQueue,location){ trafficInfo ->
+        getTrafficInfo(requestQueue, location){ trafficInfo ->
             getFirebaseReference().child("traffic_info").setValue(trafficInfo)
         }
-
     }
 
     fun addRideInfo(

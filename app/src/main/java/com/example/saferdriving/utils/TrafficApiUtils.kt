@@ -7,7 +7,6 @@ import com.android.volley.RequestQueue
 import com.android.volley.toolbox.StringRequest
 import com.example.saferdriving.BuildConfig
 import com.example.saferdriving.dataclasses.TrafficInfo
-import com.example.saferdriving.dataclasses.WeatherInfo
 import org.json.JSONObject
 
 /**
@@ -33,52 +32,53 @@ fun getTrafficInfo(
     callback: (TrafficInfo) -> Unit
 ){
     val url = getUrl(location)
+    Log.e("Traffic url", url)
 
     val stringReq = StringRequest(
         Request.Method.GET, url,
         { response ->
-
+            // Log for debugging
             Log.e("HERE", "Traffic works")
 
-            // get the JSON object
+            // Parse the JSON response
             val obj = JSONObject(response)
+            val flowSegmentData = obj.getJSONObject("flowSegmentData")
 
-            // get the Array from obj of name - "data"
-            val arr = obj.getJSONArray("flowSegmentData")
+            val frc = flowSegmentData.getString("frc")
+            val currentSpeed = flowSegmentData.getInt("currentSpeed")
+            val freeFlowSpeed = flowSegmentData.getInt("freeFlowSpeed")
+            val currentTravelTime = flowSegmentData.getInt("currentTravelTime")
+            val freeFlowTravelTime = flowSegmentData.getInt("freeFlowTravelTime")
+            val confidence = flowSegmentData.getDouble("confidence").toFloat()
+            val roadClosure = flowSegmentData.getBoolean("roadClosure")
 
-            // get the JSON object from the
-            // array at index position 0
-            val obj2 = arr.getJSONObject(0)
+            // Log the values
+            Log.d("TrafficInfo", "FRC: $frc")
+            Log.d("TrafficInfo", "Current Speed: $currentSpeed")
+            Log.d("TrafficInfo", "Free Flow Speed: $freeFlowSpeed")
+            Log.d("TrafficInfo", "Current Travel Time: $currentTravelTime")
+            Log.d("TrafficInfo", "Free Flow Travel Time: $freeFlowTravelTime")
+            Log.d("TrafficInfo", "Confidence: $confidence")
+            Log.d("TrafficInfo", "Road Closure: $roadClosure")
 
-            // set the temperature and the city
-            // name using getString() function
-            val frc = obj2.getString("frc")
-            val currentSpeed = obj2.getInt("currentSpeed")
-            val freeFlowSpeed = obj2.getInt("freeFlowSpeed")
-            val currentTravelTime = obj2.getInt("currentTravelTime")
-            val freeFlowTravelTime = obj2.getInt("freeFlowTravelTime")
-            val confidence = obj2.getDouble("confidence").toFloat()
-            val roadClosure = obj2.getBoolean("roadClosure")
-
+            // Construct TrafficInfo object
             val trafficInfo = TrafficInfo(
-                frc = frc,
-                currentSpeed = currentSpeed,
-                freeFlowSpeed = freeFlowSpeed,
-                currentTravelTime = currentTravelTime,
-                freeFlowTravelTime = freeFlowTravelTime,
-                confidence = confidence,
-                roadClosure = roadClosure
+                frc, currentSpeed, freeFlowSpeed, currentTravelTime, freeFlowTravelTime, confidence, roadClosure
             )
 
+            // Invoke callback with the constructed object
             callback(trafficInfo)
         }, { err ->
-            Log.e("HERE", "Weather doesn't work")
+            Log.e("HERE", "Traffic info doesn't work")
             // TODO: Handle error
         })
     queue.add(stringReq)
 }
 
 private fun getUrl(location: Location): String {
-    val query = "point=${location.latitude}%2C&${location.longitude}&unit=KMPH&openLr=false&key=$API_KEY"
-    return BASE_URL + query
+    //val query = "point=${location.latitude}%2C&${location.longitude}&unit=KMPH&openLr=false&key=$API_KEY"
+    //return BASE_URL + query
+
+    val query = "point=${location.latitude},${location.longitude}&unit=KMPH&openLr=false&key=$API_KEY"
+    return BASE_URL + query // Ensure BASE_URL ends with a '/' if '?' is not included
 }
