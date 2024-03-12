@@ -45,10 +45,6 @@ class LiveDataActivity : AppCompatActivity() {
             startMainActivity()
         }
 
-        binding.resetButton.setOnClickListener { resetTimer() }
-
-        binding.startStopButton.setOnClickListener { startStopTimer() }
-
         registerReceiver(updateTime, IntentFilter(TimerService.TIMER_UPDATED))
         registerReceiver(livedataServiceError, IntentFilter(LiveDataService.ERROR_BROADCAST))
     }
@@ -78,14 +74,12 @@ class LiveDataActivity : AppCompatActivity() {
     {
         timerServiceIntent.putExtra(TimerService.TIME_EXTRA, time)
         startService(timerServiceIntent)
-        binding.startStopButton.text = "Stop"
         timerStarted = true
     }
 
     private fun stopTimer()
     {
         stopService(timerServiceIntent)
-        binding.startStopButton.text = "Start"
         timerStarted = false
     }
 

@@ -17,25 +17,7 @@
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintTop_toTopOf="parent"
         tools:ignore="MissingConstraints"
-        tools:layout_editor_absoluteX="0dp" />
-
-    <com.google.android.material.button.MaterialButton
-        android:id="@+id/startStopButton"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Start Timer"
-        app:layout_constraintTop_toBottomOf="@id/timeTV"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toStartOf="@id/resetButton" />
-
-    <com.google.android.material.button.MaterialButton
-        android:id="@+id/resetButton"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="reset"
-        app:layout_constraintTop_toBottomOf="@id/timeTV"
-        app:layout_constraintStart_toEndOf="@id/startStopButton"
-        app:layout_constraintEnd_toEndOf="parent" />
+        tools:layout_editor_absoluteX="1dp" />
 
     <TextView
         android:id="@+id/error_text"
@@ -46,20 +28,9 @@
         android:textAlignment="center"
         android:textSize="11sp"
         android:visibility="invisible"
-        app:layout_constraintBottom_toTopOf="@id/start_sound"
+        app:layout_constraintBottom_toTopOf="@id/end_recording"
         tools:ignore="MissingConstraints"
         tools:layout_editor_absoluteX="0dp" />
-
-
-    <Button
-        android:id="@+id/start_sound"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="@string/startSound"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintBottom_toTopOf="@id/end_recording"
-        app:layout_constraintVertical_bias="0.2"/>
 
 
     <Button
