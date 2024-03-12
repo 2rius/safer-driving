@@ -5,9 +5,6 @@ import android.bluetooth.BluetoothManager
 import android.content.Context
 import android.content.pm.PackageManager
 import androidx.core.content.ContextCompat
-import com.example.saferdriving.utils.BluetoothSpeedCommand
-import com.example.saferdriving.utils.WifiSpeedCommand
-import com.github.eltonvs.obd.command.ObdResponse
 import com.github.eltonvs.obd.connection.ObdDeviceConnection
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -66,11 +63,5 @@ class BluetoothObdConnection(private val ip: String = "00:1D:A5:05:74:E0") : Obd
                 throw IOException("Input or output stream is null")
             }
         }
-    }
-
-    override suspend fun getSpeed(
-        delayTime: Long
-    ): ObdResponse {
-        return run(BluetoothSpeedCommand(), delayTime = delayTime)
     }
 }

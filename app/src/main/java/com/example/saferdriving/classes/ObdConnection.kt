@@ -3,6 +3,7 @@ package com.example.saferdriving.classes
 import android.content.Context
 import com.example.saferdriving.dataclasses.Acceleration
 import com.example.saferdriving.dataclasses.SpeedAndAcceleration
+import com.example.saferdriving.utils.SpeedCommand
 import com.github.eltonvs.obd.command.ObdCommand
 import com.github.eltonvs.obd.command.ObdResponse
 import com.github.eltonvs.obd.connection.ObdDeviceConnection
@@ -43,7 +44,11 @@ abstract class ObdConnection : Closeable {
      * @return An [ObdResponse] object that includes value, unit, command and rawresponse of
      * the speed.
      */
-    abstract suspend fun getSpeed(delayTime: Long = 0): ObdResponse
+    suspend fun getSpeed(
+        delayTime: Long
+    ): ObdResponse {
+        return run(SpeedCommand(), delayTime = delayTime)
+    }
 
     /**
      * Retrieves the current vehicle speed from the OBD-II device and calculated the acceleration.
