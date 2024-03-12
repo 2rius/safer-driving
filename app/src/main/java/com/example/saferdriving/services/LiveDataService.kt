@@ -1,14 +1,22 @@
 package com.example.saferdriving.services
 
+import android.app.ForegroundServiceStartNotAllowedException
+import android.app.NotificationChannel
+import android.app.NotificationManager
 import android.app.Service
+import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
+import android.content.pm.ServiceInfo
 import android.media.MediaPlayer
+import android.os.Build
 import android.os.IBinder
 import android.os.Looper
 import android.os.PowerManager
 import android.os.PowerManager.WakeLock
 import android.util.Log
+import androidx.core.app.NotificationCompat
+import androidx.core.app.ServiceCompat
 import androidx.core.content.PermissionChecker
 import com.android.volley.RequestQueue
 import com.android.volley.toolbox.Volley
@@ -44,6 +52,8 @@ class LiveDataService : Service() {
         const val TAG = "LiveDataService"
         const val ERROR_BROADCAST = "livedataServiceError"
         const val ERROR_EXTRA = "errorExtra"
+        const val CHANNEL_ID = "SaferDriving:LiveData"
+        const val CHANNEL_NAME = "LiveData"
     }
 
     private val firebaseManager = FirebaseManager.getInstance()
@@ -142,6 +152,8 @@ class LiveDataService : Service() {
 
                 startLocationAware()
 
+                setupForeground()
+
                 speed = obdConnection.getSpeed()
                 time = System.currentTimeMillis()
                 startTime = time as Long
@@ -197,6 +209,25 @@ class LiveDataService : Service() {
         wakeLock.release()
 
         super.onDestroy()
+    }
+
+    private fun setupForeground() {
+        val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+        val notificationChannelId = CHANNEL_ID
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            val notificationChannel = NotificationChannel(
+                notificationChannelId,
+                CHANNEL_NAME,
+                NotificationManager.IMPORTANCE_DEFAULT
+            )
+            notificationManager.createNotificationChannel(notificationChannel)
+        }
+
+        val notification = NotificationCompat.Builder(this, notificationChannelId)
+            .setContentTitle("Safer Driving Live Data")
+            .setContentText("Live data is being collected...")
+            .build()
+        startForeground(1, notification)
     }
 
     private fun addWeather(location: Location) {

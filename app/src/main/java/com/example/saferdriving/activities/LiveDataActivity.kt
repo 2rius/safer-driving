@@ -4,6 +4,9 @@ import android.content.*
 
 import android.os.Bundle
 import android.content.IntentFilter
+import android.os.Build
+import android.os.PersistableBundle
+import android.util.Log
 import android.view.View
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.PermissionChecker
@@ -48,12 +51,6 @@ class LiveDataActivity : AppCompatActivity() {
         registerReceiver(updateTime, IntentFilter(TimerService.TIMER_UPDATED))
         registerReceiver(livedataServiceError, IntentFilter(LiveDataService.ERROR_BROADCAST))
     }
-
-    override fun onDestroy() {
-        super.onDestroy()
-        resetTimer()
-    }
-
 
     private fun resetTimer()
     {
@@ -126,11 +123,14 @@ class LiveDataActivity : AppCompatActivity() {
             putExtra("isWifi", obdConnectionInfo.isWifi)
         }
 
-        startService(liveDataServiceIntent)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            startService(liveDataServiceIntent)
+        }
     }
 
 
     private fun startMainActivity() {
+        resetTimer()
         stopService(liveDataServiceIntent)
         val intent = Intent(
             this,
