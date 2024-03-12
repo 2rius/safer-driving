@@ -3,9 +3,7 @@ package com.example.saferdriving.services
 import android.app.Service
 import android.content.Context
 import android.content.Intent
-import android.location.Location
 import android.media.MediaPlayer
-import android.os.Binder
 import android.os.IBinder
 import android.os.Looper
 import android.os.PowerManager
@@ -13,9 +11,13 @@ import android.os.PowerManager.WakeLock
 import android.util.Log
 import androidx.core.content.PermissionChecker
 import com.android.volley.RequestQueue
+import com.android.volley.toolbox.Volley
+import com.example.saferdriving.R
+import com.example.saferdriving.classes.BluetoothObdConnection
 import com.example.saferdriving.classes.ObdConnection
+import com.example.saferdriving.classes.WifiObdConnection
+import com.example.saferdriving.dataclasses.Location
 import com.example.saferdriving.dataclasses.Road
-import com.example.saferdriving.dataclasses.SpeedAndAcceleration
 import com.example.saferdriving.dataclasses.SpeedingRecording
 import com.example.saferdriving.enums.Permissions
 import com.example.saferdriving.enums.RoadType
@@ -23,7 +25,12 @@ import com.example.saferdriving.singletons.FirebaseManager
 import com.example.saferdriving.utils.getRoad
 import com.github.eltonvs.obd.command.NonNumericResponseException
 import com.github.eltonvs.obd.command.ObdResponse
-import com.google.android.gms.location.*
+import com.google.android.gms.location.FusedLocationProviderClient
+import com.google.android.gms.location.LocationCallback
+import com.google.android.gms.location.LocationRequest
+import com.google.android.gms.location.LocationResult
+import com.google.android.gms.location.LocationServices
+import com.google.android.gms.location.Priority
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.Dispatchers
@@ -32,29 +39,43 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 
-class LiveDataService : Service(){
+class LiveDataService : Service() {
     companion object {
         const val TAG = "LiveDataService"
+        const val ERROR_BROADCAST = "livedataServiceError"
+        const val ERROR_EXTRA = "errorExtra"
     }
 
     private val firebaseManager = FirebaseManager.getInstance()
 
-    private var isServiceActive = false
+    private lateinit var obdConnection: ObdConnection
+    private lateinit var queue: RequestQueue
+    private lateinit var mediaPlayer: MediaPlayer
 
-    //OBD data
-    private var speed: ObdResponse? = null
+    private lateinit var wakeLock: WakeLock
 
-    private var time: Long? = null
-    private var speedingSecondsList: MutableList<SpeedingRecording> = mutableListOf()
-    private var roadList: MutableList<Road> = mutableListOf()
-    private var obdConnection: ObdConnection? = null
-    private var mediaPlayer: MediaPlayer? = null
+    // Fused location provider variables
+    /**
+     * Provides access to the Fused Location Provider API.
+     */
+    private lateinit var mFusedLocationClient: FusedLocationProviderClient
+    /**
+     * Callback for changes in location.
+     */
+    private lateinit var mLocationCallback: LocationCallback
     private var location: Location? = null
 
-    private var currentRoad: Road? = null
-    //Road
-    private var queue: RequestQueue? = null
+    // Relevant to check when the service stops
+    private var isServiceActive: Boolean = false
 
+    // Variables for logging the data
+    private var speed: ObdResponse? = null
+    private var time: Long? = null
+    private var startTime: Long = 0
+    private var speedingSecondsList: MutableList<SpeedingRecording> = mutableListOf()
+    private var roadList: MutableList<Road> = mutableListOf()
+
+    private var currentRoad: Road? = null
     private var isSpeeding: Boolean = false
 
     private var topSpeed: Int = 0
@@ -67,116 +88,122 @@ class LiveDataService : Service(){
     private var localLocation: Location? = null
     private var localRoad: Road? = null
 
-    private var startTime: Long = 0
+    override fun onBind(p0: Intent?): IBinder? = null
 
-    private lateinit var wakeLock: WakeLock
-
-    //Geolocation service
-    /**
-     * Provides access to the Fused Location Provider API.
-     */
-    private lateinit var mFusedLocationClient: FusedLocationProviderClient
-    /**
-     * Callback for changes in location.
-     */
-    private lateinit var mLocationCallback: LocationCallback
-
-
-    override fun onBind(intent: Intent?): IBinder {
-        // Called when a client (MainActivity in case of this sample) comes to the foreground
-        // and binds with this service. The service should cease to be a foreground service
-        // when that happens.
-        startLocationAware()
-
-        val mgr = getSystemService(Context.POWER_SERVICE) as PowerManager
-        wakeLock = mgr.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "SaferDriving:LiveData")
-        wakeLock.acquire(20 * 60 * 1000L /*20 minutes*/)
-        return LocalBinder()
-    }
-
-    inner class LocalBinder : Binder() {
-        fun getService(): LiveDataService = this@LiveDataService
-    }
-
-    /**
-     * Start the location-aware instance and defines the callback to be called when the GPS sensor
-     * provides a new user's location.
-     */
-    private fun startLocationAware() {
-        // Show a dialog to ask the user to allow the application to access the device's location.
-        // Start receiving location updates.
-        mFusedLocationClient = LocationServices
-            .getFusedLocationProviderClient(this)
-
-        // Initialize the `LocationCallback`.
-        mLocationCallback = object : LocationCallback() {
-
-            /**
-             * This method will be executed when `FusedLocationProviderClient` has a new location.
-             *
-             * @param locationResult The last known location.
-             */
-            override fun onLocationResult(locationResult: LocationResult) {
-                Log.i(TAG, "New location result")
-                super.onLocationResult(locationResult)
-                locationResult.lastLocation?.let { location ->
-                    this@LiveDataService.location = location
-                }
-            }
-        }
-    }
-
-    /**
-     * Subscribes this application to get the location changes via the `locationCallback()`.
-     */
     @OptIn(DelicateCoroutinesApi::class)
-    fun subscribeToLiveData(
-        obdConnection: ObdConnection,
-        mediaPlayer: MediaPlayer,
-        queue: RequestQueue,
-        initFunc: (Location) -> Unit,
-        errorFunc: (String) -> Unit
-    )  {
+    override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+        Log.i(TAG, "onStartCommand called")
+
         // Check if the user allows the application to access the location-aware resources.
         if (
             !Permissions.LOCATION.permissions.all { permission ->
                 PermissionChecker.checkSelfPermission(this, permission) == PermissionChecker.PERMISSION_GRANTED
             }
         ) {
-            errorFunc("Location permissions not granted correctly")
-            return
+            sendError("Location permissions not granted")
+            return START_NOT_STICKY
         }
 
+        val obdAddress: String?
+        val obdPort: Int
+        val isWifi: Boolean
 
-        isServiceActive = true
-
-        this.obdConnection = obdConnection
-        this.mediaPlayer = mediaPlayer
-        this.queue = queue
-
-        GlobalScope.launch(Dispatchers.IO) {
-            speed = obdConnection.getSpeed()
+        intent!!.apply {
+            obdAddress = getStringExtra("address")
+            obdPort = getIntExtra("port", -1)
+            isWifi = getBooleanExtra("isWifi", false)
         }
-        time = System.currentTimeMillis()
-        startTime = time as Long
 
-        // Sets the accuracy and desired interval for active location updates.
-        val locationRequest = LocationRequest
-            .Builder(Priority.PRIORITY_HIGH_ACCURACY, 200)
-            .build()
+        queue = Volley.newRequestQueue(this)
+        mediaPlayer = MediaPlayer.create(this, R.raw.sound)
 
-        val locationResult = mFusedLocationClient.lastLocation
-        locationResult.addOnCompleteListener { task ->
-            if (task.isSuccessful) {
-                initFunc(task.result)
+        obdConnection = if (isWifi) {
+            when {
+                (obdAddress == null || obdAddress == "") && obdPort == -1 -> WifiObdConnection()
+                obdPort == -1 -> WifiObdConnection(obdAddress!!)
+                (obdAddress == null || obdAddress == "") -> WifiObdConnection(port = obdPort)
+                else -> WifiObdConnection(obdAddress, obdPort)
+            }
+        } else {
+            when (obdAddress) {
+                null -> BluetoothObdConnection()
+                else -> BluetoothObdConnection(obdAddress)
             }
         }
 
-        // Subscribe to location changes.
-        mFusedLocationClient.requestLocationUpdates(
-            locationRequest, mLocationCallback, Looper.getMainLooper()
+        GlobalScope.launch(Dispatchers.IO) {
+            try {
+                obdConnection.connect(this@LiveDataService)
+                isServiceActive = true
+
+                wakeLock = (getSystemService(Context.POWER_SERVICE) as PowerManager)
+                    .newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "SaferDriving:LiveData")
+                wakeLock.acquire(20*60*1000L /*20 minutes*/)
+
+                startLocationAware()
+
+                speed = obdConnection.getSpeed()
+                time = System.currentTimeMillis()
+                startTime = time as Long
+
+                // Sets the accuracy and desired interval for active location updates.
+                val locationRequest = LocationRequest
+                    .Builder(Priority.PRIORITY_HIGH_ACCURACY, 200)
+                    .build()
+
+                val locationResult = mFusedLocationClient.lastLocation
+                locationResult.addOnCompleteListener { task ->
+                    if (task.isSuccessful) {
+                        val loc = Location(
+                            task.result.latitude,
+                            task.result.longitude
+                        )
+                        addWeather(loc)
+                    }
+                }
+
+                // Subscribe to location changes.
+                mFusedLocationClient.requestLocationUpdates(
+                    locationRequest, mLocationCallback, Looper.getMainLooper()
+                )
+
+                startLoops()
+            } catch (e: Exception) {
+                sendError(e.toString())
+            }
+        }
+
+        return START_NOT_STICKY
+    }
+
+    override fun onDestroy() {
+        Log.i(TAG, "onDestroy called")
+        mFusedLocationClient.removeLocationUpdates(mLocationCallback)
+        isServiceActive = false
+
+        if (isSpeeding) {
+            time?.let { recordSpeeding(it) }
+        }
+
+        firebaseManager.addRideInfo(
+            startTime,
+            topSpeed,
+            topSpeedHighway,
+            topSpeedCountryRoad,
+            topSpeedCity,
+            speedingSecondsList
         )
 
+        wakeLock.release()
+
+        super.onDestroy()
+    }
+
+    private fun addWeather(location: Location) {
+        firebaseManager.addWeatherInfo(queue, location)
+    }
+
+    private fun startLoops() {
         // Start coroutine updating the road
         CoroutineScope(Dispatchers.IO).launch {
             while (isServiceActive) {
@@ -203,26 +230,30 @@ class LiveDataService : Service(){
         }
     }
 
-    /**
-     * Unsubscribes this application of getting the location changes from  the `locationCallback()`.
-     */
-    fun unsubscribeToLiveData() {
-        // Unsubscribe to location changes.
-        mFusedLocationClient.removeLocationUpdates(mLocationCallback)
-        isServiceActive = false
+    private fun startLocationAware() {
+        // Show a dialog to ask the user to allow the application to access the device's location.
+        // Start receiving location updates.
+        mFusedLocationClient = LocationServices
+            .getFusedLocationProviderClient(this)
 
-        if (isSpeeding) {
-            time?.let { recordSpeeding(it) }
+        // Initialize the `LocationCallback`.
+        mLocationCallback = object : LocationCallback() {
+
+            /**
+             * This method will be executed when `FusedLocationProviderClient` has a new location.
+             *
+             * @param locationResult The last known location.
+             */
+            override fun onLocationResult(locationResult: LocationResult) {
+                Log.i(TAG, "New location result")
+                super.onLocationResult(locationResult)
+                locationResult.lastLocation?.let { location ->
+                    this@LiveDataService.location = Location(
+                        location.latitude, location.longitude
+                    )
+                }
+            }
         }
-
-        firebaseManager.addRideInfo(
-            startTime,
-            topSpeed,
-            topSpeedHighway,
-            topSpeedCountryRoad,
-            topSpeedCity,
-            speedingSecondsList
-        )
     }
 
     private suspend fun obdUpdates(
@@ -230,8 +261,8 @@ class LiveDataService : Service(){
     ) {
         if (speed != null && time != null) {
             try {
-                val response = obdConnection?.getSpeedAndAcceleration(speed!!, time!!, delay)
-                response?.let { speedAndAcceleration ->
+                val response = obdConnection.getSpeedAndAcceleration(speed!!, time!!, delay)
+                response.let { speedAndAcceleration ->
                     val timeOfResponse = (speedAndAcceleration.timeCaptured - startTime)
                     firebaseManager.addObdRecording(timeOfResponse, speedAndAcceleration)
 
@@ -247,7 +278,7 @@ class LiveDataService : Service(){
                         if (!isSpeeding) {
                             // If withSound is checked, play audio when the speeding starts
                             if (firebaseManager.getWithSound())
-                                mediaPlayer?.start()
+                                mediaPlayer.start()
 
                             // Save info about when the speeding started
                             localStartTime = speedAndAcceleration.timeCaptured
@@ -277,7 +308,7 @@ class LiveDataService : Service(){
                     }
                 }
             } catch (e: NonNumericResponseException) {
-                
+                // Do nothing, fail sometimes occur
             }
         }
     }
@@ -305,5 +336,11 @@ class LiveDataService : Service(){
         localLocation = null
         localRoad = null
         topLocalSpeed = 0 // reset for next speed
+    }
+
+    private fun sendError(message: String) {
+        val intent = Intent(ERROR_BROADCAST)
+        intent.putExtra(ERROR_EXTRA, message)
+        sendBroadcast(intent)
     }
 }

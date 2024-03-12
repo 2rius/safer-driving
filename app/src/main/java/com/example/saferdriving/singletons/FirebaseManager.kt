@@ -1,8 +1,8 @@
 package com.example.saferdriving.singletons
 
-import android.location.Location
 import com.android.volley.RequestQueue
 import com.example.saferdriving.dataclasses.BasicInfo
+import com.example.saferdriving.dataclasses.Location
 import com.example.saferdriving.dataclasses.ObdRecording
 import com.example.saferdriving.dataclasses.RideInfo
 import com.example.saferdriving.dataclasses.Road
