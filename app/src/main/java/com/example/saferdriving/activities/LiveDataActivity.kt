@@ -71,14 +71,12 @@ class LiveDataActivity : AppCompatActivity() {
     {
         timerServiceIntent.putExtra(TimerService.TIME_EXTRA, time)
         startService(timerServiceIntent)
-        binding.startStopButton.text = "Stop"
         timerStarted = true
     }
 
     private fun stopTimer()
     {
         stopService(timerServiceIntent)
-        binding.startStopButton.text = "Start"
         timerStarted = false
     }
 
