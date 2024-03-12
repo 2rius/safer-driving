@@ -1,22 +1,12 @@
 package com.example.saferdriving.singletons
 
 import com.android.volley.RequestQueue
-import com.example.saferdriving.dataclasses.BasicInfo
-import com.example.saferdriving.dataclasses.Location
-import com.example.saferdriving.dataclasses.ObdRecording
-import com.example.saferdriving.dataclasses.RideInfo
-import com.example.saferdriving.dataclasses.Road
-import com.example.saferdriving.dataclasses.SpeedAndAcceleration
-import com.example.saferdriving.dataclasses.SpeedingRecording
+import com.example.saferdriving.dataclasses.*
 import com.example.saferdriving.enums.RoadType
-import com.example.saferdriving.utils.getTrafficInfo
 import com.example.saferdriving.utils.getWeatherInfo
 import com.google.firebase.Firebase
 import com.google.firebase.database.DatabaseReference
 import com.google.firebase.database.database
-import java.text.SimpleDateFormat
-import java.util.Date
-import java.util.Locale
 
 
 class FirebaseManager private constructor() {
@@ -37,21 +27,25 @@ class FirebaseManager private constructor() {
 
     private var driverId = DEFAULT_DRIVERID
     private var withSound = false
+    private var basicInfo = BasicInfo()
+    private var weatherInfo = WeatherInfo()
 
-    private fun getWithSoundString(): String {
-        return if (withSound){
-            "data_with_sound"
-        } else {
-            "data_without_sound"
-        }
+    private fun getFirebaseReferenceObd(): DatabaseReference {
+        return db.child("obd").child(driverId)
     }
 
-    private fun getFirebaseReference(): DatabaseReference {
-        return db.child(getWithSoundString()).child("drivers").child(driverId)
+    private fun getFirebaseReferenceRideInfo(): DatabaseReference {
+        return db.child("rideInfo").child(driverId)
     }
+
+    private fun getFirebaseReferenceSpeedings(): DatabaseReference {
+        return db.child("speedings").child(driverId)
+    }
+
+
 
     fun addDriver() {
-        driverId = db.child(getWithSoundString()).child("drivers").push().key ?: "Unknown"
+        driverId = db.child("rideInfo").push().key ?: "Unknown"
     }
 
     fun setWithSound(withSound: Boolean) {
@@ -64,16 +58,44 @@ class FirebaseManager private constructor() {
 
     fun addObdRecording(
         timeOfRecording: Long,
-        speedAndAcceleration: SpeedAndAcceleration
+        speedAndAcceleration: SpeedAndAcceleration,
+        trafficInfo: TrafficInfo,
+        road: Road,
+        location: Location
     ): ObdRecording {
         val obdRecording = ObdRecording(
             speedAndAcceleration.speed.value.toInt(),
             speedAndAcceleration.acceleration.value,
-            null
+            null,
+            withSound,
+
+            basicInfo.age,
+            basicInfo.drivingExperience,
+            basicInfo.residence,
+            basicInfo.job,
+
+            trafficInfo.frc,
+            trafficInfo.currentTrafficSpeed,
+            trafficInfo.freeTrafficFlowSpeed,
+            trafficInfo.currentTrafficSpeed,
+            trafficInfo.freeTrafficFlowTravelTime,
+            trafficInfo.trafficConfidence,
+            trafficInfo.trafficRoadClosure,
+
+            weatherInfo.airPressure,
+            weatherInfo.airTemperature,
+            weatherInfo.windSpeed,
+            weatherInfo.weatherDescription,
+
+            location.longitude,
+            location.latitude,
+
+            road.name,
+            road.type.toString(),
+            road.speedLimit
         )
 
-        val time = SimpleDateFormat("mm:ss", Locale.ENGLISH).format(Date(timeOfRecording))
-        getFirebaseReference().child("recordings").child("obd").child(time).setValue(obdRecording)
+        getFirebaseReferenceObd().child(timeOfRecording.toString()).setValue(obdRecording)
 
         return obdRecording
     }
@@ -82,25 +104,44 @@ class FirebaseManager private constructor() {
         timeOfRecording: Long,
         location: Location,
         road: Road,
+        trafficInfo: TrafficInfo,
         topSpeed: Int,
         secondsSpeeding: Int
     ): SpeedingRecording {
         val speedingRecording = SpeedingRecording(
+            basicInfo.age,
+            basicInfo.drivingExperience,
+            basicInfo.residence,
+            basicInfo.job,
+
+            weatherInfo.airPressure,
+            weatherInfo.airTemperature,
+            weatherInfo.windSpeed,
+            weatherInfo.weatherDescription,
+
+            trafficInfo.frc,
+            trafficInfo.currentTrafficSpeed,
+            trafficInfo.freeTrafficFlowSpeed,
+            trafficInfo.currentTrafficSpeed,
+            trafficInfo.freeTrafficFlowTravelTime,
+            trafficInfo.trafficConfidence,
+            trafficInfo.trafficRoadClosure,
+
             location.latitude,
             location.longitude,
             road.name,
             topSpeed,
             road.type,
-            secondsSpeeding
+            secondsSpeeding,
+            road.speedLimit
         )
 
-        val time = SimpleDateFormat("mm:ss", Locale.ENGLISH).format(Date(timeOfRecording))
-        getFirebaseReference().child("recordings").child("speedings").child(time).setValue(speedingRecording)
+        getFirebaseReferenceSpeedings().child(timeOfRecording.toString()).setValue(speedingRecording)
 
         return speedingRecording
     }
 
-    fun addBasicInfo(
+    fun setBasicInfo(
         age: Int,
         drivingExperience: Int,
         residence: String,
@@ -112,28 +153,18 @@ class FirebaseManager private constructor() {
             residence,
             job
         )
-
-        getFirebaseReference().setValue(basicInfo)
+        this.basicInfo = basicInfo
     }
 
-    fun addWeatherInfo(
+    fun setWeatherInfo(
         requestQueue: RequestQueue,
         location: Location
     ) {
         getWeatherInfo(requestQueue, location) { weatherInfo ->
-            getFirebaseReference().child("weather_info").setValue(weatherInfo)
+            this.weatherInfo = weatherInfo
         }
-    }
 
-    fun addTrafficInfo(
-        requestQueue: RequestQueue,
-        location: Location
-    ){
-        getTrafficInfo(requestQueue, location){ trafficInfo ->
-            getFirebaseReference().child("traffic_info").setValue(trafficInfo)
-        }
     }
-
     fun addRideInfo(
         startTime: Long,
         topSpeed: Int,
@@ -157,6 +188,16 @@ class FirebaseManager private constructor() {
         val averageSecondsSpeedingInCity = if (citySpeedingList.isNotEmpty()) (totalSecondsSpeedingCity / citySpeedingList.size) else 0
 
         val rideInfo = RideInfo(
+            basicInfo.age,
+            basicInfo.drivingExperience,
+            basicInfo.residence,
+            basicInfo.job,
+
+            weatherInfo.airPressure,
+            weatherInfo.airTemperature,
+            weatherInfo.windSpeed,
+            weatherInfo.weatherDescription,
+
             amountOfMinutesDriving = ((System.currentTimeMillis() - startTime) / 60000).toInt(),
             averageFuelConsumption = 0,
 
@@ -181,6 +222,6 @@ class FirebaseManager private constructor() {
             averageSecondsSpeedingInCity = averageSecondsSpeedingInCity
         )
 
-        getFirebaseReference().child("ride_info").setValue(rideInfo)
+        getFirebaseReferenceRideInfo().setValue(rideInfo)
     }
 }
