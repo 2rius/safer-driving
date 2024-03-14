@@ -10,9 +10,14 @@ import com.example.saferdriving.dataclasses.TrafficInfo
 import org.json.JSONObject
 
 /**
+ * Precision for the API call
+ */
+private const val PRECISION = 12
+
+/**
  * Base URL for the Tomtom traffic API that should be extended with a given query.
  */
-private const val BASE_URL = "https://api.tomtom.com/traffic/services/4/flowSegmentData/relative0/10/json?"
+private const val BASE_URL = "https://api.tomtom.com/traffic/services/4/flowSegmentData/relative0/$PRECISION/json?"
 
 /**
  * API Key for the Tomtom Traffic API.
