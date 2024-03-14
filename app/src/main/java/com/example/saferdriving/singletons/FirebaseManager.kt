@@ -61,38 +61,40 @@ class FirebaseManager private constructor() {
         speedAndAcceleration: SpeedAndAcceleration,
         trafficInfo: TrafficInfo,
         road: Road,
-        location: Location
+        location: Location,
+        geohash: String
     ): ObdRecording {
         val obdRecording = ObdRecording(
-            speedAndAcceleration.speed.value.toInt(),
-            speedAndAcceleration.acceleration.value,
-            null,
-            withSound,
+            speed = speedAndAcceleration.speed.value.toInt(),
+            acceleration = speedAndAcceleration.acceleration.value,
+            fuel = null,
+            recordedWithSound = withSound,
+            geohash = geohash,
 
-            basicInfo.age,
-            basicInfo.drivingExperience,
-            basicInfo.residence,
-            basicInfo.job,
+            age = basicInfo.age,
+            drivingExperience = basicInfo.drivingExperience,
+            residence = basicInfo.residence,
+            job = basicInfo.job,
 
-            trafficInfo.frc,
-            trafficInfo.currentTrafficSpeed,
-            trafficInfo.freeTrafficFlowSpeed,
-            trafficInfo.currentTrafficSpeed,
-            trafficInfo.freeTrafficFlowTravelTime,
-            trafficInfo.trafficConfidence,
-            trafficInfo.trafficRoadClosure,
+            frc = trafficInfo.frc,
+            currentTrafficSpeed = trafficInfo.currentTrafficSpeed,
+            freeTrafficFlowSpeed = trafficInfo.freeTrafficFlowSpeed,
+            currentTrafficTravelTime = trafficInfo.currentTrafficTravelTime,
+            freeTrafficFlowTravelTime = trafficInfo.freeTrafficFlowTravelTime,
+            trafficConfidence = trafficInfo.trafficConfidence,
+            trafficRoadClosure = trafficInfo.trafficRoadClosure,
 
-            weatherInfo.airPressure,
-            weatherInfo.airTemperature,
-            weatherInfo.windSpeed,
-            weatherInfo.weatherDescription,
+            airPressure = weatherInfo.airPressure,
+            airTemperature = weatherInfo.airTemperature,
+            windSpeed = weatherInfo.windSpeed,
+            weatherDescription = weatherInfo.weatherDescription,
 
-            location.longitude,
-            location.latitude,
+            long = location.longitude,
+            lat = location.latitude,
 
-            road.name,
-            road.type.toString(),
-            road.speedLimit
+            roadName = road.name,
+            roadType = road.type.toString(),
+            speedLimit = road.speedLimit
         )
 
         getFirebaseReferenceObd().child(timeOfRecording.toString()).setValue(obdRecording)
@@ -106,34 +108,36 @@ class FirebaseManager private constructor() {
         road: Road,
         trafficInfo: TrafficInfo,
         topSpeed: Int,
-        secondsSpeeding: Int
+        secondsSpeeding: Int,
+        geohash: String
     ): SpeedingRecording {
         val speedingRecording = SpeedingRecording(
-            basicInfo.age,
-            basicInfo.drivingExperience,
-            basicInfo.residence,
-            basicInfo.job,
+            age = basicInfo.age,
+            drivingExperience = basicInfo.drivingExperience,
+            residence = basicInfo.residence,
+            job = basicInfo.job,
 
-            weatherInfo.airPressure,
-            weatherInfo.airTemperature,
-            weatherInfo.windSpeed,
-            weatherInfo.weatherDescription,
+            airPressure = weatherInfo.airPressure,
+            airTemperature = weatherInfo.airTemperature,
+            windSpeed = weatherInfo.windSpeed,
+            weatherDescription = weatherInfo.weatherDescription,
 
-            trafficInfo.frc,
-            trafficInfo.currentTrafficSpeed,
-            trafficInfo.freeTrafficFlowSpeed,
-            trafficInfo.currentTrafficSpeed,
-            trafficInfo.freeTrafficFlowTravelTime,
-            trafficInfo.trafficConfidence,
-            trafficInfo.trafficRoadClosure,
+            frc = trafficInfo.frc,
+            currentTrafficSpeed = trafficInfo.currentTrafficSpeed,
+            freeTrafficFlowSpeed = trafficInfo.freeTrafficFlowSpeed,
+            currentTrafficTravelTime = trafficInfo.currentTrafficTravelTime,
+            freeTrafficFlowTravelTime = trafficInfo.freeTrafficFlowTravelTime,
+            trafficConfidence = trafficInfo.trafficConfidence,
+            trafficRoadClosure = trafficInfo.trafficRoadClosure,
 
-            location.latitude,
-            location.longitude,
-            road.name,
-            topSpeed,
-            road.type,
-            secondsSpeeding,
-            road.speedLimit
+            lat = location.latitude,
+            long = location.longitude,
+            roadName = road.name,
+            topSpeed = topSpeed,
+            roadType = road.type,
+            amountOfSecondsSpeeding = secondsSpeeding,
+            speedLimit = road.speedLimit,
+            geohash = geohash
         )
 
         getFirebaseReferenceSpeedings().child(timeOfRecording.toString()).setValue(speedingRecording)

@@ -28,5 +28,6 @@ data class SpeedingRecording(
     var topSpeed: Int? = null,
     var roadType: RoadType? = null,
     var amountOfSecondsSpeeding: Int? = null,
-    var speedLimit: Int? = null
+    var speedLimit: Int? = null,
+    var geohash: String? = null
 )

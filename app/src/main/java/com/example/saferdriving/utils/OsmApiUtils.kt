@@ -68,7 +68,13 @@ fun getRoad(
         if (speedLimit == null)
             speedLimit = roadType!!.defaultSpeedLimit
 
-        val road = Road(location.latitude, location.longitude, name, roadType!!, speedLimit!!)
+        val road = Road(
+            lat = location.latitude,
+            long = location.longitude,
+            name = name,
+            type = roadType!!,
+            speedLimit = speedLimit!!
+        )
 
         callback(road)
     }, { err ->

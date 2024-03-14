@@ -8,6 +8,7 @@ data class ObdRecording(
     var acceleration: Double? = null,
     var fuel: Double? = null,
     var recordedWithSound: Boolean = false,
+    var geohash: String? = null,
 
     //basic
     var age: Int? = null,

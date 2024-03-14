@@ -52,18 +52,15 @@ fun getTrafficInfo(
             val confidence = flowSegmentData.getDouble("confidence").toFloat()
             val roadClosure = flowSegmentData.getBoolean("roadClosure")
 
-            // Log the values
-            Log.d("TrafficInfo", "FRC: $frc")
-            Log.d("TrafficInfo", "Current Speed: $currentSpeed")
-            Log.d("TrafficInfo", "Free Flow Speed: $freeFlowSpeed")
-            Log.d("TrafficInfo", "Current Travel Time: $currentTravelTime")
-            Log.d("TrafficInfo", "Free Flow Travel Time: $freeFlowTravelTime")
-            Log.d("TrafficInfo", "Confidence: $confidence")
-            Log.d("TrafficInfo", "Road Closure: $roadClosure")
-
             // Construct TrafficInfo object
             val trafficInfo = TrafficInfo(
-                frc, currentSpeed, freeFlowSpeed, currentTravelTime, freeFlowTravelTime, confidence, roadClosure
+                frc = frc,
+                currentTrafficSpeed = currentSpeed,
+                freeTrafficFlowSpeed = freeFlowSpeed,
+                currentTrafficTravelTime = currentTravelTime,
+                freeTrafficFlowTravelTime = freeFlowTravelTime,
+                trafficConfidence = confidence,
+                trafficRoadClosure = roadClosure
             )
 
             // Invoke callback with the constructed object
