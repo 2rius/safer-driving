@@ -10,9 +10,14 @@ import com.example.saferdriving.dataclasses.TrafficInfo
 import org.json.JSONObject
 
 /**
+ * Precision for the API call
+ */
+private const val PRECISION = 12
+
+/**
  * Base URL for the Tomtom traffic API that should be extended with a given query.
  */
-private const val BASE_URL = "https://api.tomtom.com/traffic/services/4/flowSegmentData/relative0/10/json?"
+private const val BASE_URL = "https://api.tomtom.com/traffic/services/4/flowSegmentData/relative0/$PRECISION/json?"
 
 /**
  * API Key for the Tomtom Traffic API.
@@ -52,18 +57,15 @@ fun getTrafficInfo(
             val confidence = flowSegmentData.getDouble("confidence").toFloat()
             val roadClosure = flowSegmentData.getBoolean("roadClosure")
 
-            // Log the values
-            Log.d("TrafficInfo", "FRC: $frc")
-            Log.d("TrafficInfo", "Current Speed: $currentSpeed")
-            Log.d("TrafficInfo", "Free Flow Speed: $freeFlowSpeed")
-            Log.d("TrafficInfo", "Current Travel Time: $currentTravelTime")
-            Log.d("TrafficInfo", "Free Flow Travel Time: $freeFlowTravelTime")
-            Log.d("TrafficInfo", "Confidence: $confidence")
-            Log.d("TrafficInfo", "Road Closure: $roadClosure")
-
             // Construct TrafficInfo object
             val trafficInfo = TrafficInfo(
-                frc, currentSpeed, freeFlowSpeed, currentTravelTime, freeFlowTravelTime, confidence, roadClosure
+                frc = frc,
+                currentTrafficSpeed = currentSpeed,
+                freeTrafficFlowSpeed = freeFlowSpeed,
+                currentTrafficTravelTime = currentTravelTime,
+                freeTrafficFlowTravelTime = freeFlowTravelTime,
+                trafficConfidence = confidence,
+                trafficRoadClosure = roadClosure
             )
 
             // Invoke callback with the constructed object

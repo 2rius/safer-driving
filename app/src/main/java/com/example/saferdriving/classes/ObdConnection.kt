@@ -45,7 +45,7 @@ abstract class ObdConnection : Closeable {
      * the speed.
      */
     suspend fun getSpeed(
-        delayTime: Long
+        delayTime: Long = 0
     ): ObdResponse {
         return run(SpeedCommand(), delayTime = delayTime)
     }

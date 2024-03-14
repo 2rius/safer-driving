@@ -14,6 +14,7 @@ import android.os.PowerManager.WakeLock
 import android.util.Log
 import androidx.core.app.NotificationCompat
 import androidx.core.content.PermissionChecker
+import ch.hsr.geohash.GeoHash
 import com.android.volley.RequestQueue
 import com.android.volley.toolbox.Volley
 import com.example.saferdriving.R
@@ -48,6 +49,7 @@ import kotlinx.coroutines.launch
 class LiveDataService : Service() {
     companion object {
         const val TAG = "LiveDataService"
+        const val GEOHASH_PRECISION = 7
         const val ERROR_BROADCAST = "livedataServiceError"
         const val ERROR_EXTRA = "errorExtra"
         const val CHANNEL_ID = "SaferDriving:LiveData"
@@ -72,6 +74,7 @@ class LiveDataService : Service() {
      */
     private lateinit var mLocationCallback: LocationCallback
     private var location: Location? = null
+    private var geohash: String? = null
 
     // Relevant to check when the service stops
     private var isServiceActive: Boolean = false
@@ -287,6 +290,11 @@ class LiveDataService : Service() {
                     this@LiveDataService.location = Location(
                         location.latitude, location.longitude
                     )
+                    geohash = GeoHash.geoHashStringWithCharacterPrecision(
+                        location.latitude,
+                        location.longitude,
+                        GEOHASH_PRECISION
+                    )
                 }
             }
         }
@@ -300,7 +308,14 @@ class LiveDataService : Service() {
                 val response = obdConnection.getSpeedAndAcceleration(speed!!, time!!, delay)
                 response.let { speedAndAcceleration ->
                     if (currentRoad!= null && currentTrafficInfo != null && location != null)
-                        firebaseManager.addObdRecording(speedAndAcceleration.timeCaptured, speedAndAcceleration, currentTrafficInfo!!, currentRoad!!, location!!)
+                        firebaseManager.addObdRecording(
+                            speedAndAcceleration.timeCaptured,
+                            speedAndAcceleration,
+                            currentTrafficInfo!!,
+                            currentRoad!!,
+                            location!!,
+                            geohash!!
+                        )
 
                     speed = response.speed
                     time = response.timeCaptured
@@ -364,6 +379,7 @@ class LiveDataService : Service() {
             localTraffic!!,
             topSpeed,
             secondsSpeeding.toInt(),
+            geohash!!
         )
 
         speedingSecondsList.add(speedingRecording)

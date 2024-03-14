@@ -59,10 +59,10 @@ fun getWeatherInfo(
             val weatherDescriptionFromJSON = obj2.getJSONObject("weather").getString("description")
 
             val weatherInfo = WeatherInfo(
-                temperature,
-                pressure,
-                windSpeed,
-                weatherDescriptionFromJSON
+                airPressure = pressure,
+                airTemperature = temperature,
+                windSpeed = windSpeed,
+                weatherDescription = weatherDescriptionFromJSON
             )
 
             callback(weatherInfo)
