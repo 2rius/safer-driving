@@ -1,14 +1,14 @@
 package com.example.saferdriving.dataclasses
 
-import com.example.saferdriving.enums.RoadType
-
 data class ObdRecording(
     //obd
     var speed: Int? = null,
     var acceleration: Double? = null,
-    var fuel: Double? = null,
+    var rpm: Double? = null,
+    var fuelType: String? = null,
+    var fuelLevel: Double? = null,
+    var engineLoadLevel: Double? = null,
     var recordedWithSound: Boolean = false,
-    var geohash: String? = null,
 
     //basic
     var age: Int? = null,
@@ -34,6 +34,7 @@ data class ObdRecording(
     //speeding
     var lat: Double? = null,
     var long: Double? = null,
+    var geohash: String? = null,
     var roadName: String? = null,
     var roadType: String? = null,
     var speedLimit: Int? = null

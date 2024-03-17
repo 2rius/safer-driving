@@ -3,6 +3,10 @@ package com.example.saferdriving.classes
 import android.content.Context
 import com.example.saferdriving.dataclasses.Acceleration
 import com.example.saferdriving.dataclasses.SpeedAndAcceleration
+import com.example.saferdriving.utils.FuelLevelCommand
+import com.example.saferdriving.utils.FuelTypeCommand
+import com.example.saferdriving.utils.LoadCommand
+import com.example.saferdriving.utils.RPMCommand
 import com.example.saferdriving.utils.SpeedCommand
 import com.github.eltonvs.obd.command.ObdCommand
 import com.github.eltonvs.obd.command.ObdResponse
@@ -51,6 +55,62 @@ abstract class ObdConnection : Closeable {
     }
 
     /**
+     * Retrieves the vehicle fuel type from the OBD-II device.
+     *
+     * @param delayTime The delay time, in milliseconds, to wait before executing the command.
+     * Defaults to 0.
+     * @return An [ObdResponse] object that includes value, unit, command and rawresponse of
+     * the fuel type.
+     */
+    suspend fun getFuelType(
+        delayTime: Long = 0
+    ): ObdResponse {
+        return run(FuelTypeCommand(), delayTime = delayTime)
+    }
+
+    /**
+     * Retrieves the current vehicle RPM from the OBD-II device.
+     *
+     * @param delayTime The delay time, in milliseconds, to wait before executing the command.
+     * Defaults to 0.
+     * @return An [ObdResponse] object that includes value, unit, command and rawresponse of
+     * the RPM.
+     */
+    suspend fun getRPM(
+        delayTime: Long = 0
+    ): ObdResponse {
+        return run(RPMCommand(), delayTime = delayTime)
+    }
+
+    /**
+     * Retrieves the vehicle fuel level from the OBD-II device.
+     *
+     * @param delayTime The delay time, in milliseconds, to wait before executing the command.
+     * Defaults to 0.
+     * @return An [ObdResponse] object that includes value, unit, command and rawresponse of
+     * the fuel level.
+     */
+    suspend fun getFuelLevel(
+        delayTime: Long = 0
+    ): ObdResponse {
+        return run(FuelLevelCommand(), delayTime = delayTime)
+    }
+
+    /**
+     * Retrieves the current vehicle engine load from the OBD-II device.
+     *
+     * @param delayTime The delay time, in milliseconds, to wait before executing the command.
+     * Defaults to 0.
+     * @return An [ObdResponse] object that includes value, unit, command and rawresponse of
+     * the engine load.
+     */
+    suspend fun getEngineLoad(
+        delayTime: Long = 0
+    ): ObdResponse {
+        return run(LoadCommand(), delayTime = delayTime)
+    }
+
+    /**
      * Retrieves the current vehicle speed from the OBD-II device and calculated the acceleration.
      *
      * @param previousSpeed The previous recorded vehicle speed.
@@ -60,7 +120,7 @@ abstract class ObdConnection : Closeable {
      * the time captured.
      */
     suspend fun getSpeedAndAcceleration(
-        previousSpeed: ObdResponse,
+        previousSpeed: Int,
         previousTime: Long,
         delayTime: Long = 0
     ): SpeedAndAcceleration {
@@ -70,23 +130,9 @@ abstract class ObdConnection : Closeable {
         val timeDifference = (currentTime - previousTime) / 1000.0
 
         // * 1000 / 3600 to convert km/h to m/s, / timedifference to calculate acceleration in m/s^2
-        val acceleration = ((currentSpeed.value.toInt() - previousSpeed.value.toInt()) * 1000.0 / 3600.0) / timeDifference
+        val acceleration = ((currentSpeed.value.toInt() - previousSpeed) * 1000.0 / 3600.0) / timeDifference
 
         return SpeedAndAcceleration(currentSpeed, Acceleration(acceleration), currentTime)
-    }
-
-    /**
-     * Retrieves the current fuel consumption from the OBD-II device.
-     *
-     * @param delayTime The delay time, in milliseconds, to wait before executing the command.
-     * Defaults to 0.
-     * @return An [ObdResponse] object that includes value, unit, command and rawresponse of
-     * the fuel consumption.
-     */
-    suspend fun getFuelConsumption(
-        delayTime: Long = 0
-    ) {
-        // TODO
     }
 
     /**

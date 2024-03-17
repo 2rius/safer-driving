@@ -14,7 +14,6 @@ import android.os.PowerManager.WakeLock
 import android.util.Log
 import androidx.core.app.NotificationCompat
 import androidx.core.content.PermissionChecker
-import ch.hsr.geohash.GeoHash
 import com.android.volley.RequestQueue
 import com.android.volley.toolbox.Volley
 import com.example.saferdriving.R
@@ -31,7 +30,6 @@ import com.example.saferdriving.singletons.FirebaseManager
 import com.example.saferdriving.utils.getRoad
 import com.example.saferdriving.utils.getTrafficInfo
 import com.github.eltonvs.obd.command.NonNumericResponseException
-import com.github.eltonvs.obd.command.ObdResponse
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationCallback
 import com.google.android.gms.location.LocationRequest
@@ -49,7 +47,6 @@ import kotlinx.coroutines.launch
 class LiveDataService : Service() {
     companion object {
         const val TAG = "LiveDataService"
-        const val GEOHASH_PRECISION = 7
         const val ERROR_BROADCAST = "livedataServiceError"
         const val ERROR_EXTRA = "errorExtra"
         const val CHANNEL_ID = "SaferDriving:LiveData"
@@ -74,13 +71,15 @@ class LiveDataService : Service() {
      */
     private lateinit var mLocationCallback: LocationCallback
     private var location: Location? = null
-    private var geohash: String? = null
 
     // Relevant to check when the service stops
     private var isServiceActive: Boolean = false
 
     // Variables for logging the data
-    private var speed: ObdResponse? = null
+    private var speed: Int? = null
+    private var rpm: Double? = null
+    private var fuelLevel: Double? = null
+    private var loadLevel: Double? = null
     private var time: Long? = null
     private var startTime: Long = 0
     private var speedingSecondsList: MutableList<SpeedingRecording> = mutableListOf()
@@ -95,12 +94,15 @@ class LiveDataService : Service() {
     private var topSpeedHighway: Int = 0
 
     private var topLocalSpeed: Int = 0
+    private var topLocalRPM: Double = 0.0
+    private var topLocalLoadLevel: Double = 0.0
     private var localStartTime: Long = 0
     private var localLocation: Location? = null
     private var localRoad: Road? = null
     private var localTraffic: TrafficInfo? = null
 
     private var currentTrafficInfo: TrafficInfo? = null
+    private var fuelType: String = "Unknown"
 
     override fun onBind(p0: Intent?): IBinder? = null
 
@@ -159,7 +161,12 @@ class LiveDataService : Service() {
 
                 setupForeground()
 
-                speed = obdConnection.getSpeed()
+                speed = obdConnection.getSpeed().value.toInt()
+                rpm = obdConnection.getRPM().value.toDouble()
+                fuelLevel = obdConnection.getFuelLevel().value.toDouble()
+                loadLevel = obdConnection.getEngineLoad().value.toDouble()
+                fuelType = obdConnection.getFuelType().value
+
                 time = System.currentTimeMillis()
                 startTime = time as Long
 
@@ -203,12 +210,13 @@ class LiveDataService : Service() {
         }
 
         firebaseManager.addRideInfo(
-            startTime,
-            topSpeed,
-            topSpeedHighway,
-            topSpeedCountryRoad,
-            topSpeedCity,
-            speedingSecondsList
+            startTime = startTime,
+            topSpeed = topSpeed,
+            topSpeedHighway = topSpeedHighway,
+            topSpeedCountryRoad = topSpeedCountryRoad,
+            topSpeedCity = topSpeedCity,
+            fuelType = fuelType,
+            speedingList = speedingSecondsList
         )
 
         wakeLock.release()
@@ -290,11 +298,6 @@ class LiveDataService : Service() {
                     this@LiveDataService.location = Location(
                         location.latitude, location.longitude
                     )
-                    geohash = GeoHash.geoHashStringWithCharacterPrecision(
-                        location.latitude,
-                        location.longitude,
-                        GEOHASH_PRECISION
-                    )
                 }
             }
         }
@@ -305,25 +308,32 @@ class LiveDataService : Service() {
     ) {
         if (speed != null && time != null) {
             try {
+                rpm = obdConnection.getRPM().value.toDouble()
+                fuelLevel = obdConnection.getFuelLevel().value.toDouble()
+                loadLevel = obdConnection.getEngineLoad().value.toDouble()
                 val response = obdConnection.getSpeedAndAcceleration(speed!!, time!!, delay)
                 response.let { speedAndAcceleration ->
                     if (currentRoad!= null && currentTrafficInfo != null && location != null)
                         firebaseManager.addObdRecording(
-                            speedAndAcceleration.timeCaptured,
-                            speedAndAcceleration,
-                            currentTrafficInfo!!,
-                            currentRoad!!,
-                            location!!,
-                            geohash!!
+                            timeOfRecording = speedAndAcceleration.timeCaptured,
+                            speedAndAcceleration = speedAndAcceleration,
+                            trafficInfo = currentTrafficInfo!!,
+                            road = currentRoad!!,
+                            location = location!!,
+                            fuelLevel = fuelLevel!!,
+                            loadLevel = loadLevel!!,
+                            rpm = rpm!!,
+                            fuelType = fuelType
                         )
 
-                    speed = response.speed
+                    speed = response.speed.value.toInt()
                     time = response.timeCaptured
-                    val speedVal = speed!!.value.toInt()
 
-                    if (currentRoad != null && currentRoad!!.speedLimit < speedVal) {
+                    if (currentRoad != null && currentRoad!!.speedLimit < speed!!) {
                         // If speed increases while speeding, update topLocalSpeed
-                        if (speedVal > topLocalSpeed) topLocalSpeed = speedVal
+                        if (speed!! > topLocalSpeed) topLocalSpeed = speed!!
+                        if (rpm!! > topLocalRPM) topLocalRPM = rpm!!
+                        if (loadLevel!! > topLocalLoadLevel) topLocalLoadLevel = loadLevel!!
 
                         // If statement to check if it is a new speeding to be recorded
                         if (!isSpeeding) {
@@ -336,6 +346,10 @@ class LiveDataService : Service() {
                             localLocation = location
                             localRoad = currentRoad
                             localTraffic = currentTrafficInfo
+
+                            topLocalSpeed = speed!!
+                            topLocalRPM = rpm!!
+                            topLocalLoadLevel = loadLevel!!
                         }
 
                         isSpeeding = true
@@ -344,18 +358,18 @@ class LiveDataService : Service() {
                         recordSpeeding(speedAndAcceleration.timeCaptured)
                     }
 
-                    if (speedVal > topSpeed) topSpeed = speedVal
+                    if (speed!! > topSpeed) topSpeed = speed!!
 
                     if (currentRoad != null) {
                         when (currentRoad!!.type) {
                             RoadType.CITY ->
-                                if (speedVal > topSpeedCity) topSpeedCity = speedVal
+                                if (speed!! > topSpeedCity) topSpeedCity = speed!!
 
                             RoadType.RURAL ->
-                                if (speedVal > topSpeedCountryRoad) topSpeedCountryRoad = speedVal
+                                if (speed!! > topSpeedCountryRoad) topSpeedCountryRoad = speed!!
 
                             RoadType.MOTORWAY ->
-                                if (speedVal > topSpeedHighway) topSpeedHighway = speedVal
+                                if (speed!! > topSpeedHighway) topSpeedHighway = speed!!
                         }
                     }
                 }
@@ -373,13 +387,15 @@ class LiveDataService : Service() {
         val secondsSpeeding = (endTime - localStartTime) / 1000
 
         val speedingRecording = firebaseManager.addSpeedingRecording(
-            localStartTime,
-            localLocation!!,
-            localRoad!!,
-            localTraffic!!,
-            topSpeed,
-            secondsSpeeding.toInt(),
-            geohash!!
+            timeOfRecording = localStartTime,
+            location = localLocation!!,
+            road = localRoad!!,
+            trafficInfo = localTraffic!!,
+            topSpeed = topLocalSpeed,
+            topRPM = topLocalRPM,
+            topEngineLevel = topLocalLoadLevel,
+            fuelType = fuelType,
+            secondsSpeeding = secondsSpeeding.toInt(),
         )
 
         speedingSecondsList.add(speedingRecording)
