@@ -29,6 +29,16 @@ class RPMCommand : ObdCommand() {
     override val handler = { it: ObdRawResponse -> ((256 * it.bufferedValue[11] + it.bufferedValue[10]) / 4).toString() }
 }
 
+class WifiRPMCommand : ObdCommand() {
+    override val tag = "ENGINE_RPM"
+    override val name = "Engine RPM"
+    override val mode = "01"
+    override val pid = "0C"
+
+    override val defaultUnit = "RPM"
+    override val handler = { it: ObdRawResponse -> ((256 * it.bufferedValue[it.bufferedValue.size - 2] + it.bufferedValue.last()) / 4).toString() }
+}
+
 class FuelTypeCommand : ObdCommand() {
     override val tag = "FUEL_TYPE"
     override val name = "Fuel Type"
@@ -83,4 +93,14 @@ class LoadCommand : ObdCommand() {
 
     override val defaultUnit = "%"
     override val handler = { it: ObdRawResponse -> "%.1f".format(100.0 / 255 * it.bufferedValue[5]) }
+}
+
+class WifiLoadCommand : ObdCommand() {
+    override val tag = "ENGINE_LOAD"
+    override val name = "Engine Load"
+    override val mode = "01"
+    override val pid = "04"
+
+    override val defaultUnit = "%"
+    override val handler = { it: ObdRawResponse -> "%.1f".format(100.0 / 255 * it.bufferedValue.last()) }
 }

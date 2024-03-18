@@ -162,9 +162,9 @@ class LiveDataService : Service() {
                 setupForeground()
 
                 speed = obdConnection.getSpeed().value.toInt()
-                rpm = obdConnection.getRPM().value.toDouble()
-                fuelLevel = obdConnection.getFuelLevel().value.toDouble()
-                loadLevel = obdConnection.getEngineLoad().value.toDouble()
+                rpm = obdConnection.getRPM().value.replace(",", ".").toDouble()
+                fuelLevel = obdConnection.getFuelLevel().value.replace(",", ".").toDouble()
+                loadLevel = obdConnection.getEngineLoad().value.replace(",", ".").toDouble()
                 fuelType = obdConnection.getFuelType().value
 
                 time = System.currentTimeMillis()
@@ -194,6 +194,7 @@ class LiveDataService : Service() {
                 startLoops()
             } catch (e: Exception) {
                 sendError(e.toString())
+                Log.i(TAG, e.stackTraceToString())
             }
         }
 
@@ -308,9 +309,9 @@ class LiveDataService : Service() {
     ) {
         if (speed != null && time != null) {
             try {
-                rpm = obdConnection.getRPM().value.toDouble()
-                fuelLevel = obdConnection.getFuelLevel().value.toDouble()
-                loadLevel = obdConnection.getEngineLoad().value.toDouble()
+                rpm = obdConnection.getRPM().value.replace(",", ".").toDouble()
+                fuelLevel = obdConnection.getFuelLevel().value.replace(",", ".").toDouble()
+                loadLevel = obdConnection.getEngineLoad().value.replace(",", ".").toDouble()
                 val response = obdConnection.getSpeedAndAcceleration(speed!!, time!!, delay)
                 response.let { speedAndAcceleration ->
                     if (currentRoad!= null && currentTrafficInfo != null && location != null)

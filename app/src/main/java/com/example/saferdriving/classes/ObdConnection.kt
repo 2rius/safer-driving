@@ -76,7 +76,7 @@ abstract class ObdConnection : Closeable {
      * @return An [ObdResponse] object that includes value, unit, command and rawresponse of
      * the RPM.
      */
-    suspend fun getRPM(
+    open suspend fun getRPM(
         delayTime: Long = 0
     ): ObdResponse {
         return run(RPMCommand(), delayTime = delayTime)
@@ -90,7 +90,7 @@ abstract class ObdConnection : Closeable {
      * @return An [ObdResponse] object that includes value, unit, command and rawresponse of
      * the fuel level.
      */
-    suspend fun getFuelLevel(
+    open suspend fun getFuelLevel(
         delayTime: Long = 0
     ): ObdResponse {
         return run(FuelLevelCommand(), delayTime = delayTime)
@@ -104,7 +104,7 @@ abstract class ObdConnection : Closeable {
      * @return An [ObdResponse] object that includes value, unit, command and rawresponse of
      * the engine load.
      */
-    suspend fun getEngineLoad(
+    open suspend fun getEngineLoad(
         delayTime: Long = 0
     ): ObdResponse {
         return run(LoadCommand(), delayTime = delayTime)
