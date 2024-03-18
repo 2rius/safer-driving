@@ -16,7 +16,8 @@ class SpeedCommand : ObdCommand() {
 
     override val defaultUnit = "Km/h"
     // Have to remove index 2 and 3 to make it work
-    override val handler = { it: ObdRawResponse -> bytesToInt(it.bufferedValue.filterIndexed { index, _ -> index != 2 && index != 3 }.toIntArray(), bytesToProcess = 1).toString() }
+//    override val handler = { it: ObdRawResponse -> bytesToInt(it.bufferedValue.filterIndexed { index, _ -> index != 2 && index != 3 }.toIntArray(), bytesToProcess = 1).toString() }
+    override val handler = { it: ObdRawResponse -> it.bufferedValue.last().toString() }
 }
 
 class RPMCommand : ObdCommand() {
@@ -82,7 +83,7 @@ class FuelLevelCommand : ObdCommand() {
     override val pid = "2F"
 
     override val defaultUnit = "%"
-    override val handler = { it: ObdRawResponse -> "%.1f".format(100.0 / 255 * it.bufferedValue[2]) }
+    override val handler = { it: ObdRawResponse -> "%.1f".format(100.0 / 255 * it.bufferedValue[it.bufferedValue.size - 2]) }
 }
 
 class LoadCommand : ObdCommand() {
