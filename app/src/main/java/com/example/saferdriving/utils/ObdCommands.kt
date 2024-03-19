@@ -2,7 +2,6 @@ package com.example.saferdriving.utils
 
 import com.github.eltonvs.obd.command.ObdCommand
 import com.github.eltonvs.obd.command.ObdRawResponse
-import com.github.eltonvs.obd.command.bytesToInt
 
 /**
  * Represents a fixed OBD command for retrieving vehicle speed. The same functionality as
@@ -15,12 +14,10 @@ class SpeedCommand : ObdCommand() {
     override val pid = "0D"
 
     override val defaultUnit = "Km/h"
-    // Have to remove index 2 and 3 to make it work
-//    override val handler = { it: ObdRawResponse -> bytesToInt(it.bufferedValue.filterIndexed { index, _ -> index != 2 && index != 3 }.toIntArray(), bytesToProcess = 1).toString() }
     override val handler = { it: ObdRawResponse -> it.bufferedValue.last().toString() }
 }
 
-class RPMCommand : ObdCommand() {
+class BluetoothRPMCommand : ObdCommand() {
     override val tag = "ENGINE_RPM"
     override val name = "Engine RPM"
     override val mode = "01"
@@ -76,7 +73,7 @@ class FuelTypeCommand : ObdCommand() {
     }
 }
 
-class FuelLevelCommand : ObdCommand() {
+class BluetoothFuelLevelCommand : ObdCommand() {
     override val tag = "FUEL_LEVEL"
     override val name = "Fuel Level"
     override val mode = "01"
@@ -86,7 +83,7 @@ class FuelLevelCommand : ObdCommand() {
     override val handler = { it: ObdRawResponse -> "%.1f".format(100.0 / 255 * it.bufferedValue[it.bufferedValue.size - 2]) }
 }
 
-class LoadCommand : ObdCommand() {
+class BluetoothLoadCommand : ObdCommand() {
     override val tag = "ENGINE_LOAD"
     override val name = "Engine Load"
     override val mode = "01"

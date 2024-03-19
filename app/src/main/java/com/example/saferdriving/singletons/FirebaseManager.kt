@@ -76,10 +76,10 @@ class FirebaseManager private constructor() {
             engineLoadLevel = loadLevel,
             recordedWithSound = withSound,
 
-            age = basicInfo.age,
-            drivingExperience = basicInfo.drivingExperience,
-            residence = basicInfo.residence,
-            job = basicInfo.job,
+            userAge = basicInfo.age,
+            userDrivingExperience = basicInfo.drivingExperience,
+            userResidenceCity = basicInfo.residenceCity,
+            userJob = basicInfo.job,
 
             frc = trafficInfo.frc,
             currentTrafficSpeed = trafficInfo.currentTrafficSpeed,
@@ -120,10 +120,11 @@ class FirebaseManager private constructor() {
         secondsSpeeding: Int
     ): SpeedingRecording {
         val speedingRecording = SpeedingRecording(
-            age = basicInfo.age,
-            drivingExperience = basicInfo.drivingExperience,
-            residence = basicInfo.residence,
-            job = basicInfo.job,
+            userAge = basicInfo.age,
+            userDrivingExperience = basicInfo.drivingExperience,
+            userResidenceCity = basicInfo.residenceCity,
+            userJob = basicInfo.job,
+            recordedWithSound = withSound,
 
             airPressure = weatherInfo.airPressure,
             airTemperature = weatherInfo.airTemperature,
@@ -163,10 +164,10 @@ class FirebaseManager private constructor() {
         job: String
     ) {
         val basicInfo = BasicInfo(
-            age,
-            drivingExperience,
-            residence,
-            job
+            age = age,
+            drivingExperience = drivingExperience,
+            residenceCity = residence,
+            job = job
         )
         this.basicInfo = basicInfo
     }
@@ -204,15 +205,16 @@ class FirebaseManager private constructor() {
         val averageSecondsSpeedingInCity = if (citySpeedingList.isNotEmpty()) (totalSecondsSpeedingCity / citySpeedingList.size) else 0
 
         val rideInfo = RideInfo(
-            basicInfo.age,
-            basicInfo.drivingExperience,
-            basicInfo.residence,
-            basicInfo.job,
+            userAge = basicInfo.age,
+            userDrivingExperience = basicInfo.drivingExperience,
+            userResidenceCity = basicInfo.residenceCity,
+            userJob = basicInfo.job,
+            recordedWithSound = true,
 
-            weatherInfo.airPressure,
-            weatherInfo.airTemperature,
-            weatherInfo.windSpeed,
-            weatherInfo.weatherDescription,
+            airPressure = weatherInfo.airPressure,
+            airTemperature = weatherInfo.airTemperature,
+            windSpeed = weatherInfo.windSpeed,
+            weatherDescription = weatherInfo.weatherDescription,
 
             amountOfMinutesDriving = ((System.currentTimeMillis() - startTime) / 60000).toInt(),
             fuelType = fuelType,

@@ -5,6 +5,10 @@ import android.bluetooth.BluetoothManager
 import android.content.Context
 import android.content.pm.PackageManager
 import androidx.core.content.ContextCompat
+import com.example.saferdriving.utils.BluetoothFuelLevelCommand
+import com.example.saferdriving.utils.BluetoothRPMCommand
+import com.example.saferdriving.utils.BluetoothLoadCommand
+import com.github.eltonvs.obd.command.ObdResponse
 import com.github.eltonvs.obd.connection.ObdDeviceConnection
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -63,5 +67,27 @@ class BluetoothObdConnection(private val ip: String = "00:1D:A5:05:74:E0") : Obd
                 throw IOException("Input or output stream is null")
             }
         }
+    }
+
+    override suspend fun getRPM(
+        delayTime: Long
+    ): ObdResponse {
+        return run(BluetoothRPMCommand(), delayTime = delayTime)
+    }
+
+    override suspend fun getEngineLoad(
+        delayTime: Long
+    ): ObdResponse {
+        return run(BluetoothLoadCommand(), delayTime = delayTime)
+    }
+
+    override suspend fun getFuelLevel(
+        delayTime: Long
+    ): ObdResponse {
+        /**
+         * FuelLevel is not supported on the emulator we are using,
+         * hence we create our own ObdResponse.
+         */
+        return run(BluetoothFuelLevelCommand(), delayTime = delayTime)
     }
 }
