@@ -1,8 +1,7 @@
 package com.example.saferdriving.classes
 
 import android.content.Context
-import com.example.saferdriving.utils.FuelLevelCommand
-import com.example.saferdriving.utils.LoadCommand
+import com.example.saferdriving.utils.BluetoothFuelLevelCommand
 import com.example.saferdriving.utils.WifiLoadCommand
 import com.example.saferdriving.utils.WifiRPMCommand
 import com.github.eltonvs.obd.command.ObdRawResponse
@@ -19,7 +18,7 @@ import java.net.Socket
  *  * establishing a connection to an OBD-II device, retrieve data from it, and close the
  *  * connection when no longer needed.
  */
-class WifiObdConnection(private val ip: String = "192.168.0.112", private val port: Int = 35000) : ObdConnection() {
+class WifiObdConnection(private val ip: String = "192.168.0.154", private val port: Int = 35000) : ObdConnection() {
     /**
      * Establishes a WIFI connection with the OBD-II device.
      * It is executed asynchronously in IO dispatcher to avoid blocking the main thread.
@@ -66,7 +65,7 @@ class WifiObdConnection(private val ip: String = "192.168.0.112", private val po
         delayTime: Long
     ): ObdResponse {
         return ObdResponse(
-            command = FuelLevelCommand(),
+            command = BluetoothFuelLevelCommand(),
             rawResponse = ObdRawResponse("", 0),
             "42.0"
         )

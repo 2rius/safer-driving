@@ -3,10 +3,11 @@ package com.example.saferdriving.dataclasses
 import com.example.saferdriving.enums.RoadType
 
 data class SpeedingRecording(
-    var age: Int? = null,
-    var drivingExperience: Int? = null,
-    var residence: String? = null,
-    var job: String? = null,
+    var userAge: Int? = null,
+    var userDrivingExperience: Int? = null,
+    var userResidenceCity: String? = null,
+    var userJob: String? = null,
+    var recordedWithSound: Boolean = false,
 
     var airPressure: Int? = null,
     var airTemperature: Int? = null,

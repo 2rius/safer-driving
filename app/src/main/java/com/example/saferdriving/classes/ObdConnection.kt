@@ -3,10 +3,7 @@ package com.example.saferdriving.classes
 import android.content.Context
 import com.example.saferdriving.dataclasses.Acceleration
 import com.example.saferdriving.dataclasses.SpeedAndAcceleration
-import com.example.saferdriving.utils.FuelLevelCommand
 import com.example.saferdriving.utils.FuelTypeCommand
-import com.example.saferdriving.utils.LoadCommand
-import com.example.saferdriving.utils.RPMCommand
 import com.example.saferdriving.utils.SpeedCommand
 import com.github.eltonvs.obd.command.ObdCommand
 import com.github.eltonvs.obd.command.ObdResponse
@@ -76,11 +73,7 @@ abstract class ObdConnection : Closeable {
      * @return An [ObdResponse] object that includes value, unit, command and rawresponse of
      * the RPM.
      */
-    open suspend fun getRPM(
-        delayTime: Long = 0
-    ): ObdResponse {
-        return run(RPMCommand(), delayTime = delayTime)
-    }
+    abstract suspend fun getRPM(delayTime: Long = 0): ObdResponse
 
     /**
      * Retrieves the vehicle fuel level from the OBD-II device.
@@ -90,11 +83,7 @@ abstract class ObdConnection : Closeable {
      * @return An [ObdResponse] object that includes value, unit, command and rawresponse of
      * the fuel level.
      */
-    open suspend fun getFuelLevel(
-        delayTime: Long = 0
-    ): ObdResponse {
-        return run(FuelLevelCommand(), delayTime = delayTime)
-    }
+    abstract suspend fun getFuelLevel(delayTime: Long = 0): ObdResponse
 
     /**
      * Retrieves the current vehicle engine load from the OBD-II device.
@@ -104,11 +93,7 @@ abstract class ObdConnection : Closeable {
      * @return An [ObdResponse] object that includes value, unit, command and rawresponse of
      * the engine load.
      */
-    open suspend fun getEngineLoad(
-        delayTime: Long = 0
-    ): ObdResponse {
-        return run(LoadCommand(), delayTime = delayTime)
-    }
+    abstract suspend fun getEngineLoad(delayTime: Long = 0): ObdResponse
 
     /**
      * Retrieves the current vehicle speed from the OBD-II device and calculated the acceleration.
