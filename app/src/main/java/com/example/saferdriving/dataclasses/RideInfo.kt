@@ -12,7 +12,7 @@ data class RideInfo(
     var weatherDescription: String? = null,
 
     var amountOfMinutesDriving: Int? = null,
-    var averageFuelConsumption: Int? = null,
+    var fuelType: String? = null,
 
     var amountOfSpeedings: Int? = null,
     var amountOfSpeedingsHighway: Int? = null,

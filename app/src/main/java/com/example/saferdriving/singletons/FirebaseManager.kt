@@ -62,14 +62,19 @@ class FirebaseManager private constructor() {
         trafficInfo: TrafficInfo,
         road: Road,
         location: Location,
-        geohash: String
+        rpm: Double,
+        fuelLevel: Double,
+        loadLevel: Double,
+        fuelType: String
     ): ObdRecording {
         val obdRecording = ObdRecording(
             speed = speedAndAcceleration.speed.value.toInt(),
             acceleration = speedAndAcceleration.acceleration.value,
-            fuel = null,
+            rpm = rpm,
+            fuelType = fuelType,
+            fuelLevel = fuelLevel,
+            engineLoadLevel = loadLevel,
             recordedWithSound = withSound,
-            geohash = geohash,
 
             age = basicInfo.age,
             drivingExperience = basicInfo.drivingExperience,
@@ -91,6 +96,7 @@ class FirebaseManager private constructor() {
 
             long = location.longitude,
             lat = location.latitude,
+            geohash = location.geohash,
 
             roadName = road.name,
             roadType = road.type.toString(),
@@ -108,8 +114,10 @@ class FirebaseManager private constructor() {
         road: Road,
         trafficInfo: TrafficInfo,
         topSpeed: Int,
-        secondsSpeeding: Int,
-        geohash: String
+        topRPM: Double,
+        topEngineLevel: Double,
+        fuelType: String,
+        secondsSpeeding: Int
     ): SpeedingRecording {
         val speedingRecording = SpeedingRecording(
             age = basicInfo.age,
@@ -132,12 +140,15 @@ class FirebaseManager private constructor() {
 
             lat = location.latitude,
             long = location.longitude,
+            geohash = location.geohash,
             roadName = road.name,
             topSpeed = topSpeed,
+            topRPM = topRPM,
+            topEngineLoadLevel = topEngineLevel,
             roadType = road.type,
             amountOfSecondsSpeeding = secondsSpeeding,
             speedLimit = road.speedLimit,
-            geohash = geohash
+            fuelType = fuelType
         )
 
         getFirebaseReferenceSpeedings().child(timeOfRecording.toString()).setValue(speedingRecording)
@@ -175,6 +186,7 @@ class FirebaseManager private constructor() {
         topSpeedHighway: Int,
         topSpeedCountryRoad: Int,
         topSpeedCity: Int,
+        fuelType: String,
         speedingList: List<SpeedingRecording>
     ) {
         val highwaySpeedingList = speedingList.filter { speeding -> speeding.roadType == RoadType.MOTORWAY }
@@ -203,7 +215,7 @@ class FirebaseManager private constructor() {
             weatherInfo.weatherDescription,
 
             amountOfMinutesDriving = ((System.currentTimeMillis() - startTime) / 60000).toInt(),
-            averageFuelConsumption = 0,
+            fuelType = fuelType,
 
             amountOfSpeedings = speedingList.size,
             amountOfSpeedingsHighway = highwaySpeedingList.size,

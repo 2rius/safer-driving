@@ -24,10 +24,13 @@ data class SpeedingRecording(
 
     var lat: Double? = null,
     var long: Double? = null,
+    var geohash: String? = null,
     var roadName: String? = null,
     var topSpeed: Int? = null,
+    var topRPM: Double? = null,
+    var topEngineLoadLevel: Double? = null,
     var roadType: RoadType? = null,
     var amountOfSecondsSpeeding: Int? = null,
     var speedLimit: Int? = null,
-    var geohash: String? = null
+    var fuelType: String? = null
 )
