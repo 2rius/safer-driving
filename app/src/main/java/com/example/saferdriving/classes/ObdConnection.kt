@@ -1,8 +1,6 @@
 package com.example.saferdriving.classes
 
 import android.content.Context
-import com.example.saferdriving.dataclasses.Acceleration
-import com.example.saferdriving.dataclasses.SpeedAndAcceleration
 import com.example.saferdriving.utils.FuelTypeCommand
 import com.example.saferdriving.utils.ObdCommandType
 import com.example.saferdriving.utils.SpeedCommand
@@ -148,31 +146,6 @@ abstract class ObdConnection : Closeable {
      * the engine load.
      */
     abstract suspend fun getEngineLoad(delayTime: Long = 0): ObdResponse
-
-    /**
-     * Retrieves the current vehicle speed from the OBD-II device and calculated the acceleration.
-     *
-     * @param previousSpeed The previous recorded vehicle speed.
-     * @param previousTime The time at which the previous speed was recorded.
-     * @param delayTime The delay time, in milliseconds, to wait before executing the command.
-     * @return A [SpeedAndAcceleration] object representing the current speed, acceleration and
-     * the time captured.
-     */
-    suspend fun getSpeedAndAcceleration(
-        previousSpeed: Int,
-        previousTime: Long,
-        delayTime: Long = 0
-    ): SpeedAndAcceleration {
-        val currentTime = System.currentTimeMillis()
-        val currentSpeed = getSpeed(delayTime)
-
-        val timeDifference = (currentTime - previousTime) / 1000.0
-
-        // * 1000 / 3600 to convert km/h to m/s, / timedifference to calculate acceleration in m/s^2
-        val acceleration = ((currentSpeed.value.toInt() - previousSpeed) * 1000.0 / 3600.0) / timeDifference
-
-        return SpeedAndAcceleration(currentSpeed, Acceleration(acceleration), currentTime)
-    }
 
     suspend fun getMultiple(
         commandTypes: List<ObdCommandType>,

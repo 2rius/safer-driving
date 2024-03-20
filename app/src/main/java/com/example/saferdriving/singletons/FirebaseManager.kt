@@ -58,7 +58,8 @@ class FirebaseManager private constructor() {
 
     fun addObdRecording(
         timeOfRecording: Long,
-        speedAndAcceleration: SpeedAndAcceleration,
+        speed: Int,
+        acceleration: Double,
         trafficInfo: TrafficInfo,
         road: Road,
         location: Location,
@@ -68,8 +69,8 @@ class FirebaseManager private constructor() {
         fuelType: String
     ): ObdRecording {
         val obdRecording = ObdRecording(
-            speed = speedAndAcceleration.speed.value.toInt(),
-            acceleration = speedAndAcceleration.acceleration.value,
+            speed = speed,
+            acceleration = acceleration,
             rpm = rpm,
             fuelType = fuelType,
             fuelLevel = fuelLevel,

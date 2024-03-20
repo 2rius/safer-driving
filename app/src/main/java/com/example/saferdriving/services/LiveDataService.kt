@@ -80,6 +80,7 @@ class LiveDataService : Service() {
 
     // Variables for logging the data
     private var speed: Int? = null
+    private var acceleration: Double? = null
     private var rpm: Double? = null
     private var fuelLevel: Double? = null
     private var loadLevel: Double? = null
@@ -164,11 +165,9 @@ class LiveDataService : Service() {
                 setupForeground()
 
                 fuelType = obdConnection.getFuelType().value
-                runContinuousObdCommands()
 
-
-                time = System.currentTimeMillis()
-                startTime = time as Long
+                updateObdData()
+                startTime = time!!
 
                 // Sets the accuracy and desired interval for active location updates.
                 val locationRequest = LocationRequest
@@ -207,7 +206,7 @@ class LiveDataService : Service() {
         isServiceActive = false
 
         if (isSpeeding) {
-            time?.let { recordSpeeding(it) }
+            time?.let { recordSpeeding() }
         }
 
         firebaseManager.addRideInfo(
@@ -307,85 +306,91 @@ class LiveDataService : Service() {
     private suspend fun obdUpdates(
         delay: Long = 0
     ) {
-        if (speed != null && time != null) {
-            try {
-                rpm = obdConnection.getRPM().value.replace(",", ".").toDouble()
-                fuelLevel = obdConnection.getFuelLevel().value.replace(",", ".").toDouble()
-                loadLevel = obdConnection.getEngineLoad().value.replace(",", ".").toDouble()
-                val response = obdConnection.getSpeedAndAcceleration(speed!!, time!!, delay)
-                response.let { speedAndAcceleration ->
-                    if (currentRoad!= null && currentTrafficInfo != null && location != null)
-                        firebaseManager.addObdRecording(
-                            timeOfRecording = speedAndAcceleration.timeCaptured,
-                            speedAndAcceleration = speedAndAcceleration,
-                            trafficInfo = currentTrafficInfo!!,
-                            road = currentRoad!!,
-                            location = location!!,
-                            fuelLevel = fuelLevel!!,
-                            loadLevel = loadLevel!!,
-                            rpm = rpm!!,
-                            fuelType = fuelType
-                        )
+        try {
+            updateObdData(delay = delay)
+            if (currentRoad!= null && currentTrafficInfo != null && location != null)
+                firebaseManager.addObdRecording(
+                    timeOfRecording = time!!,
+                    speed = speed!!,
+                    acceleration = acceleration!!,
+                    trafficInfo = currentTrafficInfo!!,
+                    road = currentRoad!!,
+                    location = location!!,
+                    fuelLevel = fuelLevel!!,
+                    loadLevel = loadLevel!!,
+                    rpm = rpm!!,
+                    fuelType = fuelType
+                )
 
-                    speed = response.speed.value.toInt()
-                    time = response.timeCaptured
+            if (currentRoad != null && currentRoad!!.speedLimit < speed!!) {
+                // If speed increases while speeding, update topLocalSpeed
+                if (speed!! > topLocalSpeed) topLocalSpeed = speed!!
+                if (rpm!! > topLocalRPM) topLocalRPM = rpm!!
+                if (loadLevel!! > topLocalLoadLevel) topLocalLoadLevel = loadLevel!!
 
-                    if (currentRoad != null && currentRoad!!.speedLimit < speed!!) {
-                        // If speed increases while speeding, update topLocalSpeed
-                        if (speed!! > topLocalSpeed) topLocalSpeed = speed!!
-                        if (rpm!! > topLocalRPM) topLocalRPM = rpm!!
-                        if (loadLevel!! > topLocalLoadLevel) topLocalLoadLevel = loadLevel!!
+                // If statement to check if it is a new speeding to be recorded
+                if (!isSpeeding) {
+                    // If withSound is checked, play audio when the speeding starts
+                    if (firebaseManager.getWithSound())
+                        mediaPlayer.start()
 
-                        // If statement to check if it is a new speeding to be recorded
-                        if (!isSpeeding) {
-                            // If withSound is checked, play audio when the speeding starts
-                            if (firebaseManager.getWithSound())
-                                mediaPlayer.start()
+                    // Save info about when the speeding started
+                    localStartTime = time!!
+                    localLocation = location
+                    localRoad = currentRoad
+                    localTraffic = currentTrafficInfo
 
-                            // Save info about when the speeding started
-                            localStartTime = speedAndAcceleration.timeCaptured
-                            localLocation = location
-                            localRoad = currentRoad
-                            localTraffic = currentTrafficInfo
-
-                            topLocalSpeed = speed!!
-                            topLocalRPM = rpm!!
-                            topLocalLoadLevel = loadLevel!!
-                        }
-
-                        isSpeeding = true
-
-                    } else if (currentRoad != null && isSpeeding) {
-                        recordSpeeding(speedAndAcceleration.timeCaptured)
-                    }
-
-                    if (speed!! > topSpeed) topSpeed = speed!!
-
-                    if (currentRoad != null) {
-                        when (currentRoad!!.type) {
-                            RoadType.CITY ->
-                                if (speed!! > topSpeedCity) topSpeedCity = speed!!
-
-                            RoadType.RURAL ->
-                                if (speed!! > topSpeedCountryRoad) topSpeedCountryRoad = speed!!
-
-                            RoadType.MOTORWAY ->
-                                if (speed!! > topSpeedHighway) topSpeedHighway = speed!!
-                        }
-                    }
+                    topLocalSpeed = speed!!
+                    topLocalRPM = rpm!!
+                    topLocalLoadLevel = loadLevel!!
                 }
-            } catch (e: NonNumericResponseException) {
-                // Do nothing, fail sometimes occur
+
+                isSpeeding = true
+
+            } else if (currentRoad != null && isSpeeding) {
+                recordSpeeding()
             }
+
+            if (speed!! > topSpeed) topSpeed = speed!!
+
+            if (currentRoad != null) {
+                when (currentRoad!!.type) {
+                    RoadType.CITY ->
+                        if (speed!! > topSpeedCity) topSpeedCity = speed!!
+
+                    RoadType.RURAL ->
+                        if (speed!! > topSpeedCountryRoad) topSpeedCountryRoad = speed!!
+
+                    RoadType.MOTORWAY ->
+                        if (speed!! > topSpeedHighway) topSpeedHighway = speed!!
+                }
+            }
+        } catch (e: NonNumericResponseException) {
+            // Do nothing, fail sometimes occur
         }
     }
 
-    private suspend fun runContinuousObdCommands() {
-        val commandsToRun = ObdCommandType.values().toList().filter {
-            it != ObdCommandType.FUEL_TYPE
+    private suspend fun updateObdData(
+        updateAcceleration: Boolean = true,
+        delay: Long = 0
+    ) {
+        val commandsToRun =
+            ObdCommandType.values().toList().filter { it != ObdCommandType.FUEL_TYPE }
+
+        val responses = obdConnection.getMultiple(commandsToRun, delay)
+        val newTime = System.currentTimeMillis()
+
+        if (updateAcceleration && speed != null && time != null) {
+            val speedResponse = responses[ObdCommandType.SPEED.tag]!!
+            updateAcceleration(
+                speed!!,
+                time!!,
+                speedResponse.value.toInt(),
+                newTime
+            )
         }
 
-        val responses = obdConnection.getMultiple(commandsToRun)
+        time = newTime
 
         speed = responses[ObdCommandType.SPEED.tag]!!.value.toInt()
 
@@ -394,12 +399,22 @@ class LiveDataService : Service() {
         loadLevel = responses[ObdCommandType.LOAD.tag]!!.value.replace(",", ".").toDouble()
     }
 
-    private fun recordSpeeding(
-        endTime: Long
+    private fun updateAcceleration(
+        prevSpeed: Int,
+        prevTime: Long,
+        newSpeed: Int,
+        newTime: Long
     ) {
+        val timeDifference = (newTime - prevTime) / 1000.0
+
+        // * 1000 / 3600 to convert km/h to m/s, / timedifference to calculate acceleration in m/s^2
+        acceleration = ((newSpeed - prevSpeed) * 1000.0 / 3600.0) / timeDifference
+    }
+
+    private fun recordSpeeding() {
         isSpeeding = false
 
-        val secondsSpeeding = (endTime - localStartTime) / 1000
+        val secondsSpeeding = (time!! - localStartTime) / 1000
 
         val speedingRecording = firebaseManager.addSpeedingRecording(
             timeOfRecording = localStartTime,
