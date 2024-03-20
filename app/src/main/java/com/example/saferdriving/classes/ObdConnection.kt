@@ -223,38 +223,4 @@ abstract class ObdConnection : Closeable {
     override fun close() {
         socket.close()
     }
-
-    /**
-     * Sample code for implementing ObdConnection:
-     *         var speed: ObdResponse? = null
-    var acceleration: Acceleration? = null
-
-    val requestPermission: (() -> Unit) -> () -> Unit = { onDenied -> getRequestPermission(BLUETOOTH_PERMISSIONS, onDenied = onDenied) }
-
-    val futureConnection = showConnectionTypeDialog(this, requestPermission)
-
-    // futureConnection.thenAccept will run concurrently, so code beneath this will run at the same time
-    futureConnection.thenAccept { connection ->
-    GlobalScope.launch(Dispatchers.IO) {
-    try {
-    connection.connect(this@MainActivity)
-
-    var prevTime = System.currentTimeMillis()
-    var prevSpeed = connection.getSpeed()
-
-    while (true) {
-    val response = connection.getSpeedAndAcceleration(prevSpeed, prevTime, 500)
-
-    speed = response.speed
-    acceleration = response.acceleration
-    prevTime = response.timeCaptured
-    prevSpeed = response.speed
-
-    }
-    } catch (e: Exception) {
-    // Handle error, usually problem with connecting to OBD device
-    }
-    }
-    }
-     */
 }
