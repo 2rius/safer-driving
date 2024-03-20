@@ -7,8 +7,17 @@ import com.github.eltonvs.obd.command.ObdRawResponse
  * Represents a fixed OBD command for retrieving vehicle speed. The same functionality as
  * [com.github.eltonvs.obd.command.engine.SpeedCommand] but fixed for our specific needs.
  */
+
+enum class ObdCommandType(val tag: String) {
+    SPEED("SPEED"),
+    FUEL_TYPE("FUEL_TYPE"),
+    RPM("ENGINE_RPM"),
+    LOAD("ENGINE_LOAD"),
+    FUEL_LEVEL("FUEL_LEVEL")
+}
+
 class SpeedCommand : ObdCommand() {
-    override val tag = "SPEED"
+    override val tag = ObdCommandType.SPEED.tag
     override val name = "Vehicle Speed"
     override val mode = "01"
     override val pid = "0D"
@@ -17,28 +26,8 @@ class SpeedCommand : ObdCommand() {
     override val handler = { it: ObdRawResponse -> it.bufferedValue.last().toString() }
 }
 
-class BluetoothRPMCommand : ObdCommand() {
-    override val tag = "ENGINE_RPM"
-    override val name = "Engine RPM"
-    override val mode = "01"
-    override val pid = "0C"
-
-    override val defaultUnit = "RPM"
-    override val handler = { it: ObdRawResponse -> ((256 * it.bufferedValue[11] + it.bufferedValue[10]) / 4).toString() }
-}
-
-class WifiRPMCommand : ObdCommand() {
-    override val tag = "ENGINE_RPM"
-    override val name = "Engine RPM"
-    override val mode = "01"
-    override val pid = "0C"
-
-    override val defaultUnit = "RPM"
-    override val handler = { it: ObdRawResponse -> ((256 * it.bufferedValue[it.bufferedValue.size - 2] + it.bufferedValue.last()) / 4).toString() }
-}
-
 class FuelTypeCommand : ObdCommand() {
-    override val tag = "FUEL_TYPE"
+    override val tag = ObdCommandType.FUEL_TYPE.tag
     override val name = "Fuel Type"
     override val mode = "01"
     override val pid = "51"
@@ -73,18 +62,28 @@ class FuelTypeCommand : ObdCommand() {
     }
 }
 
-class BluetoothFuelLevelCommand : ObdCommand() {
-    override val tag = "FUEL_LEVEL"
-    override val name = "Fuel Level"
+class BluetoothRPMCommand : ObdCommand() {
+    override val tag = ObdCommandType.RPM.tag
+    override val name = "Engine RPM"
     override val mode = "01"
-    override val pid = "2F"
+    override val pid = "0C"
 
-    override val defaultUnit = "%"
-    override val handler = { it: ObdRawResponse -> "%.1f".format(100.0 / 255 * it.bufferedValue[it.bufferedValue.size - 2]) }
+    override val defaultUnit = "RPM"
+    override val handler = { it: ObdRawResponse -> ((256 * it.bufferedValue[11] + it.bufferedValue[10]) / 4).toString() }
+}
+
+class WifiRPMCommand : ObdCommand() {
+    override val tag = ObdCommandType.RPM.tag
+    override val name = "Engine RPM"
+    override val mode = "01"
+    override val pid = "0C"
+
+    override val defaultUnit = "RPM"
+    override val handler = { it: ObdRawResponse -> ((256 * it.bufferedValue[it.bufferedValue.size - 2] + it.bufferedValue.last()) / 4).toString() }
 }
 
 class BluetoothLoadCommand : ObdCommand() {
-    override val tag = "ENGINE_LOAD"
+    override val tag = ObdCommandType.LOAD.tag
     override val name = "Engine Load"
     override val mode = "01"
     override val pid = "04"
@@ -94,11 +93,21 @@ class BluetoothLoadCommand : ObdCommand() {
 }
 
 class WifiLoadCommand : ObdCommand() {
-    override val tag = "ENGINE_LOAD"
+    override val tag = ObdCommandType.LOAD.tag
     override val name = "Engine Load"
     override val mode = "01"
     override val pid = "04"
 
     override val defaultUnit = "%"
     override val handler = { it: ObdRawResponse -> "%.1f".format(100.0 / 255 * it.bufferedValue.last()) }
+}
+
+class BluetoothFuelLevelCommand : ObdCommand() {
+    override val tag = ObdCommandType.FUEL_LEVEL.tag
+    override val name = "Fuel Level"
+    override val mode = "01"
+    override val pid = "2F"
+
+    override val defaultUnit = "%"
+    override val handler = { it: ObdRawResponse -> "%.1f".format(100.0 / 255 * it.bufferedValue[it.bufferedValue.size - 2]) }
 }

@@ -3,7 +3,7 @@ package com.example.saferdriving.enums
 import android.Manifest
 import android.os.Build
 
-enum class Permissions(val permissions: Array<String>) {
+enum class Permission(val permissions: Array<String>) {
     /**
      * Bluetooth permissions will vary depending on the Android SDK version.
      * In SDK version 23 and above, only [Manifest.permission.BLUETOOTH_CONNECT]

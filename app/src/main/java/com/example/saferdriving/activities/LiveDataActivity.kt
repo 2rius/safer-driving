@@ -5,16 +5,13 @@ import android.content.*
 import android.os.Bundle
 import android.content.IntentFilter
 import android.os.Build
-import android.os.PersistableBundle
-import android.util.Log
 import android.view.View
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.PermissionChecker
 import com.example.saferdriving.R
 import com.example.saferdriving.databinding.ActivityLiveDataDisplayBinding
 import com.example.saferdriving.dataclasses.ObdConnectionInfo
-import com.example.saferdriving.enums.Permissions
-import com.example.saferdriving.enums.Permissions.*
+import com.example.saferdriving.enums.Permission.*
 import com.example.saferdriving.services.LiveDataService
 import com.example.saferdriving.services.TimerService
 import com.example.saferdriving.utils.getRequestPermission

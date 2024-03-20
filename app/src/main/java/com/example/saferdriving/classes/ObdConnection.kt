@@ -4,11 +4,22 @@ import android.content.Context
 import com.example.saferdriving.dataclasses.Acceleration
 import com.example.saferdriving.dataclasses.SpeedAndAcceleration
 import com.example.saferdriving.utils.FuelTypeCommand
+import com.example.saferdriving.utils.ObdCommandType
 import com.example.saferdriving.utils.SpeedCommand
 import com.github.eltonvs.obd.command.ObdCommand
+import com.github.eltonvs.obd.command.ObdRawResponse
 import com.github.eltonvs.obd.command.ObdResponse
+import com.github.eltonvs.obd.command.RegexPatterns
+import com.github.eltonvs.obd.command.removeAll
 import com.github.eltonvs.obd.connection.ObdDeviceConnection
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withContext
 import java.io.Closeable
+import java.io.InputStream
+import java.io.OutputStream
+import kotlin.system.measureTimeMillis
 
 /**
  * Abstract class for interacting with an OBD-II device. It provides functionality for
@@ -19,6 +30,11 @@ abstract class ObdConnection : Closeable {
     protected lateinit var socket: Closeable
     protected lateinit var obdDeviceConnection: ObdDeviceConnection
 
+    protected abstract val commands: List<ObdCommand>
+
+    protected abstract fun getInputStream(): InputStream
+    protected abstract fun getOutputStream(): OutputStream
+
     /**
      * Establishes a connection to the OBD-II device.
      * This method should be implemented by concrete subclasses depending on the type of OBD-II
@@ -28,13 +44,51 @@ abstract class ObdConnection : Closeable {
      */
     abstract suspend fun connect(context: Context)
 
-    suspend fun run(
+    protected suspend fun run(
         command: ObdCommand,
         useCache: Boolean = false,
         delayTime: Long = 0,
         maxRetries: Int = 5
     ): ObdResponse {
         return obdDeviceConnection.run(command, useCache, delayTime, maxRetries)
+    }
+
+    private suspend fun runMultiple(
+        commands: List<ObdCommand>,
+        delayTime: Long = 0,
+        maxRetries: Int = 5
+    ): Map<String, ObdResponse> = runBlocking {
+        val inputStream = getInputStream()
+        val outputStream = getOutputStream()
+
+        val concatinatedRawCommands = commands.joinToString(separator = "\r") { it.rawCommand } + "\r"
+
+        var rawData: String
+
+        val elapsedTime = measureTimeMillis {
+            sendCommands(outputStream, concatinatedRawCommands, delayTime)
+            rawData = readRawData(inputStream, maxRetries)
+        }
+
+        val rawResponses = rawData.split("\r")
+
+        commands.foldIndexed(mutableMapOf()) { index, acc, command ->
+            val rawResponse = if (rawResponses.size > index) rawResponses[index] else ""
+            val obdRawResponse = ObdRawResponse(rawResponse, elapsedTime = elapsedTime)
+            acc.apply { put(command.tag, command.handleResponse(obdRawResponse)) }
+        }
+    }
+
+    private suspend fun getFromType(
+        commandType: ObdCommandType
+    ): ObdResponse {
+        return when (commandType) {
+            ObdCommandType.SPEED -> getSpeed()
+            ObdCommandType.FUEL_TYPE -> getFuelType()
+            ObdCommandType.RPM -> getRPM()
+            ObdCommandType.LOAD -> getEngineLoad()
+            ObdCommandType.FUEL_LEVEL -> getFuelLevel()
+        }
     }
 
     /**
@@ -118,6 +172,73 @@ abstract class ObdConnection : Closeable {
         val acceleration = ((currentSpeed.value.toInt() - previousSpeed) * 1000.0 / 3600.0) / timeDifference
 
         return SpeedAndAcceleration(currentSpeed, Acceleration(acceleration), currentTime)
+    }
+
+    suspend fun getMultiple(
+        commandTypes: List<ObdCommandType>,
+        delayTime: Long = 0
+    ): Map<String, ObdResponse> {
+        val commandsToRequest = mutableListOf<ObdCommand>()
+        val allTagResults = mutableMapOf<String, ObdResponse>()
+
+        commandTypes.forEach { type ->
+            val foundCommand = commands.find { cmd -> cmd.tag == type.tag }
+            if (foundCommand != null)
+                commandsToRequest.add(foundCommand)
+            else {
+                allTagResults[type.tag] = getFromType(type)
+            }
+        }
+
+        val multiResponses = runMultiple(commandsToRequest, delayTime = delayTime)
+        allTagResults.putAll(multiResponses)
+
+        return allTagResults
+    }
+
+    private suspend fun sendCommands(
+        outputStream: OutputStream,
+        concatenatedRawCommands: String,
+        delayTime: Long
+    ) {
+        withContext(Dispatchers.IO) {
+            outputStream.write(concatenatedRawCommands.toByteArray())
+            outputStream.flush()
+            if (delayTime > 0) {
+                delay(delayTime)
+            }
+        }
+    }
+
+    private suspend fun readRawData(
+        inputStream: InputStream,
+        maxRetries: Int
+    ): String = runBlocking {
+        var b: Byte
+        var c: Char
+        val res = StringBuffer()
+        var retriesCount = 0
+
+        withContext(Dispatchers.IO) {
+            // read until '>' arrives OR end of stream reached (-1)
+            while (retriesCount <= maxRetries) {
+                if (inputStream.available() > 0) {
+                    b = inputStream.read().toByte()
+                    if (b < 0) {
+                        break
+                    }
+                    c = b.toInt().toChar()
+                    if (c == '>') {
+                        break
+                    }
+                    res.append(c)
+                } else {
+                    retriesCount += 1
+                    delay(500)
+                }
+            }
+            removeAll(RegexPatterns.SEARCHING_PATTERN, res.toString()).trim()
+        }
     }
 
     /**

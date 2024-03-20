@@ -24,9 +24,10 @@ import com.example.saferdriving.dataclasses.Location
 import com.example.saferdriving.dataclasses.Road
 import com.example.saferdriving.dataclasses.SpeedingRecording
 import com.example.saferdriving.dataclasses.TrafficInfo
-import com.example.saferdriving.enums.Permissions
+import com.example.saferdriving.enums.Permission
 import com.example.saferdriving.enums.RoadType
 import com.example.saferdriving.singletons.FirebaseManager
+import com.example.saferdriving.utils.ObdCommandType
 import com.example.saferdriving.utils.getRoad
 import com.example.saferdriving.utils.getTrafficInfo
 import com.github.eltonvs.obd.command.NonNumericResponseException
@@ -60,6 +61,8 @@ class LiveDataService : Service() {
     private lateinit var mediaPlayer: MediaPlayer
 
     private lateinit var wakeLock: WakeLock
+
+    private var isWifi = false
 
     // Fused location provider variables
     /**
@@ -112,7 +115,7 @@ class LiveDataService : Service() {
 
         // Check if the user allows the application to access the location-aware resources.
         if (
-            !Permissions.LOCATION.permissions.all { permission ->
+            !Permission.LOCATION.permissions.all { permission ->
                 PermissionChecker.checkSelfPermission(this, permission) == PermissionChecker.PERMISSION_GRANTED
             }
         ) {
@@ -122,7 +125,6 @@ class LiveDataService : Service() {
 
         val obdAddress: String?
         val obdPort: Int
-        val isWifi: Boolean
 
         intent!!.apply {
             obdAddress = getStringExtra("address")
@@ -161,11 +163,9 @@ class LiveDataService : Service() {
 
                 setupForeground()
 
-                speed = obdConnection.getSpeed().value.toInt()
-                rpm = obdConnection.getRPM().value.replace(",", ".").toDouble()
-                fuelLevel = obdConnection.getFuelLevel().value.replace(",", ".").toDouble()
-                loadLevel = obdConnection.getEngineLoad().value.replace(",", ".").toDouble()
                 fuelType = obdConnection.getFuelType().value
+                runContinuousObdCommands()
+
 
                 time = System.currentTimeMillis()
                 startTime = time as Long
@@ -378,6 +378,20 @@ class LiveDataService : Service() {
                 // Do nothing, fail sometimes occur
             }
         }
+    }
+
+    private suspend fun runContinuousObdCommands() {
+        val commandsToRun = ObdCommandType.values().toList().filter {
+            it != ObdCommandType.FUEL_TYPE
+        }
+
+        val responses = obdConnection.getMultiple(commandsToRun)
+
+        speed = responses[ObdCommandType.SPEED.tag]!!.value.toInt()
+
+        rpm = responses[ObdCommandType.RPM.tag]!!.value.replace(",", ".").toDouble()
+        fuelLevel = responses[ObdCommandType.FUEL_LEVEL.tag]!!.value.replace(",", ".").toDouble()
+        loadLevel = responses[ObdCommandType.LOAD.tag]!!.value.replace(",", ".").toDouble()
     }
 
     private fun recordSpeeding(
