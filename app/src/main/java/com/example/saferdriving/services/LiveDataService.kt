@@ -164,9 +164,7 @@ class LiveDataService : Service() {
 
                 setupForeground()
 
-                fuelType = obdConnection.getFuelType().value
-
-                updateObdData()
+                updateObdData(updateFuelType = true)
                 startTime = time!!
 
                 // Sets the accuracy and desired interval for active location updates.
@@ -307,7 +305,7 @@ class LiveDataService : Service() {
         delay: Long = 0
     ) {
         try {
-            updateObdData(delay = delay)
+            updateObdData(updateAcceleration = true, delay = delay)
             if (currentRoad!= null && currentTrafficInfo != null && location != null)
                 firebaseManager.addObdRecording(
                     timeOfRecording = time!!,
@@ -371,10 +369,13 @@ class LiveDataService : Service() {
     }
 
     private suspend fun updateObdData(
-        updateAcceleration: Boolean = true,
+        updateFuelType: Boolean = false,
+        updateAcceleration: Boolean = false,
         delay: Long = 0
     ) {
-        val commandsToRun =
+        val commandsToRun = if (updateFuelType)
+            ObdCommandType.values().toList()
+        else
             ObdCommandType.values().toList().filter { it != ObdCommandType.FUEL_TYPE }
 
         val responses = obdConnection.getMultiple(commandsToRun, delay)
@@ -389,6 +390,8 @@ class LiveDataService : Service() {
                 newTime
             )
         }
+
+        if (updateFuelType) fuelType = responses[ObdCommandType.FUEL_TYPE.tag]!!.value
 
         time = newTime
 

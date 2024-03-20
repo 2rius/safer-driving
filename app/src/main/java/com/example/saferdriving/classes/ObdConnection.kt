@@ -65,10 +65,10 @@ abstract class ObdConnection : Closeable {
 
         val elapsedTime = measureTimeMillis {
             sendCommands(outputStream, concatinatedRawCommands, delayTime)
-            rawData = readRawData(inputStream, maxRetries)
+            rawData = readRawData(inputStream, maxRetries, commands.size)
         }
 
-        val rawResponses = rawData.split("\r")
+        val rawResponses = rawData.split(">")
 
         commands.foldIndexed(mutableMapOf()) { index, acc, command ->
             val rawResponse = if (rawResponses.size > index) rawResponses[index] else ""
@@ -185,16 +185,18 @@ abstract class ObdConnection : Closeable {
 
     private suspend fun readRawData(
         inputStream: InputStream,
-        maxRetries: Int
+        maxRetries: Int,
+        expectedResponses: Int = 1
     ): String = runBlocking {
         var b: Byte
         var c: Char
         val res = StringBuffer()
         var retriesCount = 0
+        var givenResponses = 0
 
         withContext(Dispatchers.IO) {
             // read until '>' arrives OR end of stream reached (-1)
-            while (retriesCount <= maxRetries) {
+            while (retriesCount <= maxRetries && givenResponses < expectedResponses) {
                 if (inputStream.available() > 0) {
                     b = inputStream.read().toByte()
                     if (b < 0) {
@@ -202,7 +204,7 @@ abstract class ObdConnection : Closeable {
                     }
                     c = b.toInt().toChar()
                     if (c == '>') {
-                        break
+                        givenResponses++
                     }
                     res.append(c)
                 } else {
