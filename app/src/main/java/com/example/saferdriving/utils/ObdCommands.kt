@@ -95,7 +95,12 @@ class BluetoothLoadCommand : ObdCommand() {
     override val pid = "04"
 
     override val defaultUnit = "%"
-    override val handler = { it: ObdRawResponse -> "%.1f".format(100.0 / 255 * it.bufferedValue[5]) }
+    override val handler = { it: ObdRawResponse ->
+        if (it.bufferedValue.size > 5)
+            "%.1f".format(100.0 / 255 * it.bufferedValue[5])
+        else
+            "%.1f".format(100.0 / 255 * it.bufferedValue.last())
+    }
 }
 
 class WifiLoadCommand : ObdCommand() {
