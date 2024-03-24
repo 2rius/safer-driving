@@ -24,7 +24,12 @@ class BluetoothRPMCommand : ObdCommand() {
     override val pid = "0C"
 
     override val defaultUnit = "RPM"
-    override val handler = { it: ObdRawResponse -> ((256 * it.bufferedValue[11] + it.bufferedValue[10]) / 4).toString() }
+    override val handler = { it: ObdRawResponse ->
+        if (it.bufferedValue.size > 11)
+            ((256 * it.bufferedValue[11] + it.bufferedValue[10]) / 4).toString()
+        else
+            ((256 * it.bufferedValue[it.bufferedValue.size - 2] + it.bufferedValue.last()) / 4).toString()
+    }
 }
 
 class WifiRPMCommand : ObdCommand() {
