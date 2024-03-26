@@ -78,16 +78,6 @@ class FuelTypeCommand : ObdCommand() {
     }
 }
 
-class BluetoothFuelLevelCommand : ObdCommand() {
-    override val tag = "FUEL_LEVEL"
-    override val name = "Fuel Level"
-    override val mode = "01"
-    override val pid = "2F"
-
-    override val defaultUnit = "%"
-    override val handler = { it: ObdRawResponse -> "%.1f".format(100.0 / 255 * it.bufferedValue[it.bufferedValue.size - 2]) }
-}
-
 class BluetoothLoadCommand : ObdCommand() {
     override val tag = "ENGINE_LOAD"
     override val name = "Engine Load"

@@ -1,10 +1,8 @@
 package com.example.saferdriving.classes
 
 import android.content.Context
-import com.example.saferdriving.utils.BluetoothFuelLevelCommand
 import com.example.saferdriving.utils.WifiLoadCommand
 import com.example.saferdriving.utils.WifiRPMCommand
-import com.github.eltonvs.obd.command.ObdRawResponse
 import com.github.eltonvs.obd.command.ObdResponse
 import com.github.eltonvs.obd.connection.ObdDeviceConnection
 import kotlinx.coroutines.Dispatchers
@@ -59,15 +57,5 @@ class WifiObdConnection(private val ip: String = "192.168.0.154", private val po
         delayTime: Long
     ): ObdResponse {
         return run(WifiLoadCommand(), delayTime = delayTime)
-    }
-
-    override suspend fun getFuelLevel(
-        delayTime: Long
-    ): ObdResponse {
-        return ObdResponse(
-            command = BluetoothFuelLevelCommand(),
-            rawResponse = ObdRawResponse("", 0),
-            "42.0"
-        )
     }
 }

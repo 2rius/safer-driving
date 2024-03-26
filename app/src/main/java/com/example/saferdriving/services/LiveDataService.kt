@@ -78,7 +78,6 @@ class LiveDataService : Service() {
     // Variables for logging the data
     private var speed: Int? = null
     private var rpm: Double? = null
-    private var fuelLevel: Double? = null
     private var loadLevel: Double? = null
     private var time: Long? = null
     private var startTime: Long = 0
@@ -163,7 +162,6 @@ class LiveDataService : Service() {
 
                 speed = obdConnection.getSpeed().value.toInt()
                 rpm = obdConnection.getRPM().value.replace(",", ".").toDouble()
-                fuelLevel = obdConnection.getFuelLevel().value.replace(",", ".").toDouble()
                 loadLevel = obdConnection.getEngineLoad().value.replace(",", ".").toDouble()
                 fuelType = obdConnection.getFuelType().value
 
@@ -310,7 +308,6 @@ class LiveDataService : Service() {
         if (speed != null && time != null) {
             try {
                 rpm = obdConnection.getRPM().value.replace(",", ".").toDouble()
-                fuelLevel = obdConnection.getFuelLevel().value.replace(",", ".").toDouble()
                 loadLevel = obdConnection.getEngineLoad().value.replace(",", ".").toDouble()
                 val response = obdConnection.getSpeedAndAcceleration(speed!!, time!!, delay)
                 response.let { speedAndAcceleration ->
@@ -321,7 +318,6 @@ class LiveDataService : Service() {
                             trafficInfo = currentTrafficInfo!!,
                             road = currentRoad!!,
                             location = location!!,
-                            fuelLevel = fuelLevel!!,
                             loadLevel = loadLevel!!,
                             rpm = rpm!!,
                             fuelType = fuelType
