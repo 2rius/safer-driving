@@ -27,7 +27,10 @@ class BluetoothRPMCommand : ObdCommand() {
     override val handler = { it: ObdRawResponse ->
         if (it.bufferedValue.size > 11)
             ((256 * it.bufferedValue[11] + it.bufferedValue[10]) / 4).toString()
-        else
+        else if (it.value.length % 2 == 1) {
+            val realBufferedValue = it.processedValue.takeLast(4).chunked(2) { cs -> cs.toString().toInt(radix = 16) }.toIntArray()
+            ((256 * realBufferedValue[0] + realBufferedValue[1]) / 4).toString()
+        } else
             ((256 * it.bufferedValue[it.bufferedValue.size - 2] + it.bufferedValue.last()) / 4).toString()
     }
 }
@@ -86,10 +89,11 @@ class BluetoothLoadCommand : ObdCommand() {
 
     override val defaultUnit = "%"
     override val handler = { it: ObdRawResponse ->
-        if (it.bufferedValue.size > 5)
-            "%.1f".format(100.0 / 255 * it.bufferedValue[5])
-        else
-            "%.1f".format(100.0 / 255 * it.bufferedValue.last())
+        if (it.value.length % 2 == 0)
+            "%.1f".format(((it.bufferedValue.last()) / 255.0) * 100)
+        else {
+            "%.1f".format(((it.processedValue.takeLast(2).toInt(radix = 16)) / 255.0) * 100)
+        }
     }
 }
 
