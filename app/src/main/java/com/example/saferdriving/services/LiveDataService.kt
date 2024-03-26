@@ -130,7 +130,7 @@ class LiveDataService : Service() {
         }
 
         queue = Volley.newRequestQueue(this)
-        mediaPlayer = MediaPlayer.create(this, R.raw.sound)
+        mediaPlayer = MediaPlayer.create(this, R.raw.soundreal)
 
         obdConnection = if (isWifi) {
             when {
