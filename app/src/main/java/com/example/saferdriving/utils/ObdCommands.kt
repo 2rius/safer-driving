@@ -106,3 +106,21 @@ class WifiLoadCommand : ObdCommand() {
     override val defaultUnit = "%"
     override val handler = { it: ObdRawResponse -> "%.1f".format(100.0 / 255 * it.bufferedValue.last()) }
 }
+
+class BluetoothFuelRateCommand : ObdCommand() {
+    override val tag = "FUEL_RATE"
+    override val name = "Fuel Rate"
+    override val mode = "01"
+    override val pid = "5E"
+
+    override val defaultUnit = "L/h"
+    override val handler = { it: ObdRawResponse ->
+        if (it.bufferedValue.size > 11)
+            "%.2f".format(((256.0 * it.bufferedValue[11].toFloat() + it.bufferedValue[10].toFloat()) / 20.0))
+        else if (it.value.length % 2 == 1) {
+            val realBufferedValue = it.processedValue.takeLast(4).chunked(2) { cs -> cs.toString().toInt(radix = 16) }.toIntArray()
+            "%.2f".format(((256.0 * realBufferedValue[0].toFloat() + realBufferedValue[1].toFloat()) / 20.0))
+        } else
+            "%.2f".format(((256.0 * it.bufferedValue[it.bufferedValue.size - 2].toFloat() + it.bufferedValue.last().toFloat()) / 20.0))
+    }
+}
