@@ -27,7 +27,10 @@ class BluetoothRPMCommand : ObdCommand() {
     override val handler = { it: ObdRawResponse ->
         if (it.bufferedValue.size > 11)
             ((256 * it.bufferedValue[11] + it.bufferedValue[10]) / 4).toString()
-        else
+        else if (it.value.length % 2 == 1) {
+            val realBufferedValue = it.processedValue.takeLast(4).chunked(2) { cs -> cs.toString().toInt(radix = 16) }.toIntArray()
+            ((256 * realBufferedValue[0] + realBufferedValue[1]) / 4).toString()
+        } else
             ((256 * it.bufferedValue[it.bufferedValue.size - 2] + it.bufferedValue.last()) / 4).toString()
     }
 }
@@ -86,10 +89,11 @@ class BluetoothLoadCommand : ObdCommand() {
 
     override val defaultUnit = "%"
     override val handler = { it: ObdRawResponse ->
-        if (it.bufferedValue.size > 5)
-            "%.1f".format(100.0 / 255 * it.bufferedValue[5])
-        else
-            "%.1f".format(100.0 / 255 * it.bufferedValue.last())
+        if (it.value.length % 2 == 0)
+            "%.1f".format(((it.bufferedValue.last()) / 255.0) * 100)
+        else {
+            "%.1f".format(((it.processedValue.takeLast(2).toInt(radix = 16)) / 255.0) * 100)
+        }
     }
 }
 
@@ -101,4 +105,22 @@ class WifiLoadCommand : ObdCommand() {
 
     override val defaultUnit = "%"
     override val handler = { it: ObdRawResponse -> "%.1f".format(100.0 / 255 * it.bufferedValue.last()) }
+}
+
+class BluetoothFuelRateCommand : ObdCommand() {
+    override val tag = "FUEL_RATE"
+    override val name = "Fuel Rate"
+    override val mode = "01"
+    override val pid = "5E"
+
+    override val defaultUnit = "L/h"
+    override val handler = { it: ObdRawResponse ->
+        if (it.bufferedValue.size > 11)
+            "%.2f".format(((256.0 * it.bufferedValue[11].toFloat() + it.bufferedValue[10].toFloat()) / 20.0))
+        else if (it.value.length % 2 == 1) {
+            val realBufferedValue = it.processedValue.takeLast(4).chunked(2) { cs -> cs.toString().toInt(radix = 16) }.toIntArray()
+            "%.2f".format(((256.0 * realBufferedValue[0].toFloat() + realBufferedValue[1].toFloat()) / 20.0))
+        } else
+            "%.2f".format(((256.0 * it.bufferedValue[it.bufferedValue.size - 2].toFloat() + it.bufferedValue.last().toFloat()) / 20.0))
+    }
 }
