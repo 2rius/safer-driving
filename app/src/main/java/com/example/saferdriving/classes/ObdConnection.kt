@@ -76,16 +76,6 @@ abstract class ObdConnection : Closeable {
     abstract suspend fun getRPM(delayTime: Long = 0): ObdResponse
 
     /**
-     * Retrieves the vehicle fuel level from the OBD-II device.
-     *
-     * @param delayTime The delay time, in milliseconds, to wait before executing the command.
-     * Defaults to 0.
-     * @return An [ObdResponse] object that includes value, unit, command and rawresponse of
-     * the fuel level.
-     */
-    abstract suspend fun getFuelLevel(delayTime: Long = 0): ObdResponse
-
-    /**
      * Retrieves the current vehicle engine load from the OBD-II device.
      *
      * @param delayTime The delay time, in milliseconds, to wait before executing the command.

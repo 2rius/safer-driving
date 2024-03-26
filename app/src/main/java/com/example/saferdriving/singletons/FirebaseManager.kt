@@ -63,7 +63,6 @@ class FirebaseManager private constructor() {
         road: Road,
         location: Location,
         rpm: Double,
-        fuelLevel: Double,
         loadLevel: Double,
         fuelType: String
     ): ObdRecording {
@@ -72,7 +71,6 @@ class FirebaseManager private constructor() {
             acceleration = speedAndAcceleration.acceleration.value,
             rpm = rpm,
             fuelType = fuelType,
-            fuelLevel = fuelLevel,
             engineLoadLevel = loadLevel,
             recordedWithSound = withSound,
 

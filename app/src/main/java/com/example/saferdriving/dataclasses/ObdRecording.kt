@@ -6,7 +6,6 @@ data class ObdRecording(
     var acceleration: Double? = null,
     var rpm: Double? = null,
     var fuelType: String? = null,
-    var fuelLevel: Double? = null,
     var engineLoadLevel: Double? = null,
     var recordedWithSound: Boolean = false,
 
