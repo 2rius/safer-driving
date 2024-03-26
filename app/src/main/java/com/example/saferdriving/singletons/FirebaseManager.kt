@@ -207,7 +207,7 @@ class FirebaseManager private constructor() {
             userDrivingExperience = basicInfo.drivingExperience,
             userResidenceCity = basicInfo.residenceCity,
             userJob = basicInfo.job,
-            recordedWithSound = true,
+            recordedWithSound = withSound,
 
             airPressure = weatherInfo.airPressure,
             airTemperature = weatherInfo.airTemperature,
