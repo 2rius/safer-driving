@@ -46,7 +46,7 @@ gen/
 out/
 
 # Gradle files
-.gradle
+# .gradle
 .gradle/
 build/
 
@@ -78,7 +78,7 @@ captures/
 *.keystore
 
 # Google Services (e.g. APIs or Firebase)
-# google-services.json
+google-services.json
 
 # Android Patch
 gen-external-apklibs
@@ -96,6 +96,7 @@ obj/
 
 # User-specific configurations
 .idea/caches/
+app/.idea/
 .idea/libraries/
 .idea/shelf/
 .idea/workspace.xml
@@ -119,6 +120,10 @@ obj/
 .idea/gradle.xml
 .idea/jarRepositories.xml
 .idea/navEditor.xml
+.idea/migrations.xml
+.idea/kotlinc.xml
+.idea/deploymentTargetDropDown.xml
+.idea/.gitignore
 
 # Legacy Eclipse project files
 .classpath
@@ -152,5 +157,8 @@ fabric.properties
 ### AndroidStudio Patch ###
 
 !/gradle/wrapper/gradle-wrapper.jar
+
+
+
 
 # End of https://www.toptal.com/developers/gitignore/api/kotlin,androidstudio

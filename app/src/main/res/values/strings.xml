@@ -1,3 +1,22 @@
 <resources>
     <string name="app_name">Safer Driving</string>
+    <string name="connection_type_dialog_title">Choose OBD-II Connection Type</string>
+    <string name="wifi">WIFI</string>
+    <string name="bluetooth">Bluetooth</string>
+    <string name="speed">Speed loading…</string>
+    <string name="speed_result">Speed: %s</string>
+    <string name="error">Error: %s</string>
+    <string name="ip_address_optional">IP Address (Optional)</string>
+    <string name="port_optional">Port (Optional)</string>
+    <string name="positive_button">OK</string>
+    <string name="title_activity_live_data_display">LiveDataDisplay</string>
+    <string name="register_new_ride">Register Driver</string>
+    <string name="start">Start</string>
+    <string name="refresh">Refresh Geolocation</string>
+    <string name="longitude">Longitude</string>
+    <string name="latitude">Latitude</string>
+    <string name="startSound">Start Sound</string>
+    <string name="endRide">End ride</string>
+    <string name="go_to_record">Record</string>
+    <string name="weather_info">Get Weather Info</string>
 </resources>

@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".activities.RegisterDriverActivity">
+
+    <!-- EditText for Age -->
+    <EditText
+        android:id="@+id/editTextAge"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:hint="Age"
+        android:inputType="number"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toTopOf="@+id/editTextDrivingExperience"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent" />
+
+    <!-- EditText for Driving Experience -->
+    <EditText
+        android:id="@+id/editTextDrivingExperience"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:hint="Driving Experience"
+        android:inputType="number"
+        app:layout_constraintTop_toBottomOf="@+id/editTextAge"
+        app:layout_constraintBottom_toTopOf="@+id/editTextResidence"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent" />
+
+    <!-- EditText for Residence -->
+    <EditText
+        android:id="@+id/editTextResidence"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:hint="Residence"
+        app:layout_constraintTop_toBottomOf="@+id/editTextDrivingExperience"
+        app:layout_constraintBottom_toTopOf="@+id/editTextJob"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent" />
+
+    <!-- EditText for Job -->
+    <EditText
+        android:id="@+id/editTextJob"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:hint="Job"
+        app:layout_constraintTop_toBottomOf="@+id/editTextResidence"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent" />
+
+    <!-- EditText for Fuel type -->
+    <EditText
+        android:id="@+id/editTextFuelType"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:hint="Fuel type"
+        android:text="Gasoline"
+        app:layout_constraintTop_toBottomOf="@+id/editTextJob"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent" />
+
+    <!-- Checkbox for Sound -->
+    <CheckBox
+        android:id="@+id/checkboxSound"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Enable Sound"
+        app:layout_constraintTop_toBottomOf="@+id/editTextFuelType"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent" />
+
+    <Button
+        android:id="@+id/go_to_record"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/go_to_record"
+        app:layout_constraintTop_toBottomOf="@id/checkboxSound"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent" />
+
+    <!-- Add more EditText fields as needed -->
+
+</androidx.constraintlayout.widget.ConstraintLayout>
