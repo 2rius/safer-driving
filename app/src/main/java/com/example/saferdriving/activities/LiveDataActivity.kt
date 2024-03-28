@@ -40,6 +40,8 @@ class LiveDataActivity : AppCompatActivity() {
         timerServiceIntent = Intent(applicationContext, TimerService::class.java)
         liveDataServiceIntent = Intent(this, LiveDataService::class.java)
 
+        liveDataServiceIntent.putExtra("FuelType", intent.getStringExtra("FuelType"))
+
         if (savedInstanceState == null) {
             setupLiveDataService()
         }

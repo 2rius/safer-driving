@@ -51,13 +51,24 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent" />
 
+    <!-- EditText for Fuel type -->
+    <EditText
+        android:id="@+id/editTextFuelType"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:hint="Fuel type"
+        android:text="Gasoline"
+        app:layout_constraintTop_toBottomOf="@+id/editTextJob"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent" />
+
     <!-- Checkbox for Sound -->
     <CheckBox
         android:id="@+id/checkboxSound"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="Enable Sound"
-        app:layout_constraintTop_toBottomOf="@+id/editTextJob"
+        app:layout_constraintTop_toBottomOf="@+id/editTextFuelType"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent" />
 

@@ -47,10 +47,12 @@ class RegisterDriverActivity : AppCompatActivity() {
     }
 
     private fun startLiveDataDisplayActivity() {
+        val fuelType = binding.editTextFuelType.text.toString()
         val intent = Intent(
             this,
             LiveDataActivity::class.java
         )
+        intent.putExtra("FuelType", fuelType)
         startActivity(intent)
         finish()
     }
