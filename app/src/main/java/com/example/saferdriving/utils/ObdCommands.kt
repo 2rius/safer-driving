@@ -14,7 +14,12 @@ class SpeedCommand : ObdCommand() {
     override val pid = "0D"
 
     override val defaultUnit = "Km/h"
-    override val handler = { it: ObdRawResponse -> it.bufferedValue.last().toString() }
+    override val handler = { it: ObdRawResponse ->
+        if (it.value.length % 2 == 0)
+            it.bufferedValue.last().toString()
+        else
+            it.processedValue.takeLast(2).toInt(radix = 16).toString()
+    }
 }
 
 class BluetoothRPMCommand : ObdCommand() {

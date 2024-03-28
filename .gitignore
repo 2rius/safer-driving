@@ -158,6 +158,9 @@ fabric.properties
 
 !/gradle/wrapper/gradle-wrapper.jar
 
+# Releases
+/app/release
+
 
 
 
