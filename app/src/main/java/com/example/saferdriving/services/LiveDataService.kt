@@ -163,7 +163,12 @@ class LiveDataService : Service() {
                 speed = obdConnection.getSpeed().value.toInt()
                 rpm = obdConnection.getRPM().value.replace(",", ".").toDouble()
                 loadLevel = obdConnection.getEngineLoad().value.replace(",", ".").toDouble()
-                fuelType = obdConnection.getFuelType().value
+                fuelType = try {
+                    obdConnection.getFuelType().value
+                } catch (e: Exception) {
+                    intent.getStringExtra("FuelType") ?: "Unknown"
+                }
+
 
                 time = System.currentTimeMillis()
                 startTime = time as Long
