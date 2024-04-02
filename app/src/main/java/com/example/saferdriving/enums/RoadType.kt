@@ -12,9 +12,9 @@ enum class RoadType(val defaultSpeedLimit: Int) {
 
     override fun toString(): String {
         return when (this) {
-            CITY -> "By"
-            RURAL -> "Landevej"
-            MOTORWAY -> "Moterway"
+            CITY -> "City"
+            RURAL -> "Rural"
+            MOTORWAY -> "Motorway"
         }
     }
 }

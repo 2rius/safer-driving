@@ -30,7 +30,7 @@ data class SpeedingRecording(
     var topSpeed: Int? = null,
     var topRPM: Double? = null,
     var topEngineLoadLevel: Double? = null,
-    var roadType: RoadType? = null,
+    var roadType: String? = null,
     var amountOfSecondsSpeeding: Int? = null,
     var speedLimit: Int? = null,
     var fuelType: String? = null
