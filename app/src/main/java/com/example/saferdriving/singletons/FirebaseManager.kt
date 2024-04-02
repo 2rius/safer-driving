@@ -144,7 +144,7 @@ class FirebaseManager private constructor() {
             topSpeed = topSpeed,
             topRPM = topRPM,
             topEngineLoadLevel = topEngineLevel,
-            roadType = road.type,
+            roadType = road.type.toString(),
             amountOfSecondsSpeeding = secondsSpeeding,
             speedLimit = road.speedLimit,
             fuelType = fuelType
@@ -188,9 +188,9 @@ class FirebaseManager private constructor() {
         fuelType: String,
         speedingList: List<SpeedingRecording>
     ) {
-        val highwaySpeedingList = speedingList.filter { speeding -> speeding.roadType == RoadType.MOTORWAY }
-        val countryRoadSpeedingList = speedingList.filter { speeding -> speeding.roadType == RoadType.RURAL }
-        val citySpeedingList = speedingList.filter { speeding -> speeding.roadType == RoadType.CITY }
+        val highwaySpeedingList = speedingList.filter { speeding -> speeding.roadType == RoadType.MOTORWAY.toString() }
+        val countryRoadSpeedingList = speedingList.filter { speeding -> speeding.roadType == RoadType.RURAL.toString() }
+        val citySpeedingList = speedingList.filter { speeding -> speeding.roadType == RoadType.CITY.toString() }
 
         val totalSecondsSpeeding = speedingList.fold(0) { acc, speeding -> acc + speeding.amountOfSecondsSpeeding!! }
         val totalSecondsSpeedingHighWay = highwaySpeedingList.fold(0) { acc, speeding -> acc + speeding.amountOfSecondsSpeeding!! }
