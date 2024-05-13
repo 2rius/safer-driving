@@ -1,6 +1,6 @@
 # Safer Driving
 
-Application for the bachelor project "Safer Driving"
+Application for the bachelor project "Data Analysis on Speeding Behavior: The Impact of Auditory Warnings & Demographic Factors"
 
 ## Authors
 
